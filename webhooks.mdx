@@ -1,0 +1,460 @@
+---
+title: "Webhooks"
+description: "Receive real-time notifications for API events"
+icon: "bell"
+---
+
+## Overview
+
+Webhooks allow you to receive real-time HTTP notifications when events occur in your BounceWatch account. Instead of polling the API, webhooks push data to your server automatically.
+
+<Info>
+  Webhooks are essential for [Realtime API](/api-reference/realtime-api) to receive enrichment completion notifications.
+</Info>
+
+## Quick Setup
+
+<Steps>
+  <Step title="Create Endpoint">
+    Create an HTTPS endpoint on your server to receive webhook events.
+  </Step>
+  <Step title="Configure Webhook">
+    Register your endpoint via the API or dashboard.
+  </Step>
+  <Step title="Verify Signatures (Optional)">
+    Optionally validate incoming webhooks using HMAC-SHA256 signatures for enhanced security.
+  </Step>
+  <Step title="Respond Quickly">
+    Return a 2xx status code within 30 seconds.
+  </Step>
+</Steps>
+
+## Configuring Webhooks
+
+### Via API
+
+```bash
+POST /v1/account/webhook
+```
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "webhook_url": "https://your-domain.com/webhooks/bouncewatch",
+    "events": ["enrichment.completed", "credit_low"]
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.bouncewatch.com/v1/account/webhook', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    webhook_url: 'https://your-domain.com/webhooks/bouncewatch',
+    events: ['enrichment.completed', 'credit_low']
+  })
+});
+
+const { data } = await response.json();
+// Save data.secret securely!
+```
+
+```python Python
+response = requests.post(
+    'https://api.bouncewatch.com/v1/account/webhook',
+    headers={'X-API-Key': 'YOUR_API_KEY'},
+    json={
+        'webhook_url': 'https://your-domain.com/webhooks/bouncewatch',
+        'events': ['enrichment.completed', 'credit_low']
+    }
+)
+# Save response.json()['data']['secret'] securely!
+```
+
+```php PHP
+$ch = curl_init('https://api.bouncewatch.com/v1/account/webhook');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'X-API-Key: YOUR_API_KEY',
+    'Content-Type: application/json'
+]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'webhook_url' => 'https://your-domain.com/webhooks/bouncewatch',
+    'events' => ['enrichment.completed', 'credit_low']
+]));
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+// Save $data['data']['secret'] securely!
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "webhook_id": "wh_345678",
+    "webhook_url": "https://your-domain.com/webhooks/bouncewatch",
+    "events": ["enrichment.completed", "credit_low"],
+    "secret": "whsec_abc123xyz789",
+    "status": "active",
+    "created_at": "2025-01-29T15:00:00Z"
+  }
+}
+```
+
+<Warning>
+  **Save your webhook secret!** You'll need it to verify webhook signatures. It's only shown once.
+</Warning>
+
+## Available Events
+
+<AccordionGroup>
+  <Accordion title="enrichment.completed" icon="check" defaultOpen>
+    Triggered when a realtime enrichment job completes successfully.
+    
+    ```json
+    {
+      "event": "enrichment.completed",
+      "batch_id": "batch_1gVwXby8PsYHoMQR",
+      "domain": "stripe.com",
+      "status": "completed",
+      "requested_modules": ["business", "technology"],
+      "requested_at": "2025-11-23T10:00:00Z",
+      "completed_at": "2025-11-23T10:05:30Z",
+      "duration_seconds": 330,
+      "credits": {
+        "reserved": 20,
+        "used": 20,
+        "refunded": 0
+      },
+      "data_url": "https://api.bouncewatch.com/v1/enrichment/batch_1gVwXby8PsYHoMQR/results"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="enrichment.failed" icon="xmark">
+    Triggered when a realtime enrichment job fails.
+    
+    ```json
+    {
+      "event": "enrichment.failed",
+      "batch_id": "batch_1gVwXby8PsYHoMQR",
+      "domain": "invalid-domain.xyz",
+      "status": "failed",
+      "error": "company_not_found",
+      "message": "Could not find company data for this domain",
+      "credits": {
+        "reserved": 20,
+        "used": 0,
+        "refunded": 20
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="credit_low" icon="triangle-exclamation">
+    Triggered when your credits fall below 20% of your plan limit.
+    
+    ```json
+    {
+      "event": "credit_low",
+      "timestamp": "2025-01-29T15:30:00Z",
+      "account_id": "acc_123456",
+      "data": {
+        "credits_remaining": 980,
+        "credits_total": 10000,
+        "percentage_remaining": 9.8,
+        "reset_date": "2025-02-01T00:00:00Z"
+      }
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="credit_depleted" icon="empty-set">
+    Triggered when your credits reach zero.
+    
+    ```json
+    {
+      "event": "credit_depleted",
+      "timestamp": "2025-01-29T18:00:00Z",
+      "account_id": "acc_123456",
+      "data": {
+        "credits_remaining": 0,
+        "credits_total": 10000,
+        "reset_date": "2025-02-01T00:00:00Z"
+      }
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Webhook Security (Optional)
+
+<Note>
+  Signature verification is **optional** but strongly recommended for production environments to ensure webhook authenticity.
+</Note>
+
+All webhook requests include security headers for verification:
+
+| Header | Description |
+|--------|-------------|
+| `X-BW-Signature` | HMAC-SHA256 signature of the payload |
+| `X-BW-Timestamp` | Unix timestamp when the webhook was sent |
+| `X-BW-Webhook-ID` | Unique ID for this webhook delivery |
+
+### Verifying Signatures (Optional)
+
+Always verify webhook signatures to ensure requests are from BounceWatch.
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript
+    const crypto = require('crypto');
+
+    function verifyWebhook(payload, signature, timestamp, secret) {
+      // Check timestamp (reject if older than 5 minutes)
+      const now = Math.floor(Date.now() / 1000);
+      if (Math.abs(now - parseInt(timestamp)) > 300) {
+        throw new Error('Webhook timestamp too old');
+      }
+      
+      // Calculate expected signature
+      const signedPayload = `${timestamp}.${payload}`;
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(signedPayload)
+        .digest('hex');
+      
+      // Compare signatures
+      if (!crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expectedSignature)
+      )) {
+        throw new Error('Invalid webhook signature');
+      }
+      
+      return true;
+    }
+
+    // Express.js handler
+    app.post('/webhooks/bouncewatch', express.raw({ type: 'application/json' }), (req, res) => {
+      const signature = req.headers['x-bw-signature'];
+      const timestamp = req.headers['x-bw-timestamp'];
+      const payload = req.body.toString();
+      
+      try {
+        verifyWebhook(payload, signature, timestamp, WEBHOOK_SECRET);
+        const event = JSON.parse(payload);
+        
+        // Handle the event
+        console.log(`Received ${event.event} event`);
+        
+        res.status(200).send('OK');
+      } catch (error) {
+        console.error('Webhook error:', error.message);
+        res.status(401).send('Invalid signature');
+      }
+    });
+    ```
+  </Tab>
+  
+  <Tab title="Python">
+    ```python
+    import hmac
+    import hashlib
+    import time
+    from flask import Flask, request
+
+    app = Flask(__name__)
+    WEBHOOK_SECRET = 'whsec_abc123xyz789'
+
+    def verify_webhook(payload, signature, timestamp, secret):
+        # Check timestamp (reject if older than 5 minutes)
+        if abs(time.time() - int(timestamp)) > 300:
+            raise ValueError('Webhook timestamp too old')
+        
+        # Calculate expected signature
+        signed_payload = f"{timestamp}.{payload}"
+        expected_signature = hmac.new(
+            secret.encode(),
+            signed_payload.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        
+        # Compare signatures
+        if not hmac.compare_digest(signature, expected_signature):
+            raise ValueError('Invalid webhook signature')
+        
+        return True
+
+    @app.route('/webhooks/bouncewatch', methods=['POST'])
+    def webhook_handler():
+        signature = request.headers.get('X-BW-Signature')
+        timestamp = request.headers.get('X-BW-Timestamp')
+        payload = request.get_data(as_text=True)
+        
+        try:
+            verify_webhook(payload, signature, timestamp, WEBHOOK_SECRET)
+            event = request.get_json()
+            
+            # Handle the event
+            print(f"Received {event['event']} event")
+            
+            return 'OK', 200
+        except ValueError as e:
+            print(f"Webhook error: {e}")
+            return 'Invalid signature', 401
+    ```
+  </Tab>
+  
+  <Tab title="PHP">
+    ```php
+    <?php
+    
+    $webhookSecret = 'whsec_abc123xyz789';
+    
+    function verifyWebhook($payload, $signature, $timestamp, $secret) {
+        // Check timestamp (reject if older than 5 minutes)
+        if (abs(time() - intval($timestamp)) > 300) {
+            throw new Exception('Webhook timestamp too old');
+        }
+        
+        // Calculate expected signature
+        $signedPayload = "{$timestamp}.{$payload}";
+        $expectedSignature = hash_hmac('sha256', $signedPayload, $secret);
+        
+        // Compare signatures
+        if (!hash_equals($signature, $expectedSignature)) {
+            throw new Exception('Invalid webhook signature');
+        }
+        
+        return true;
+    }
+    
+    // Get webhook data
+    $payload = file_get_contents('php://input');
+    $signature = $_SERVER['HTTP_X_BW_SIGNATURE'] ?? '';
+    $timestamp = $_SERVER['HTTP_X_BW_TIMESTAMP'] ?? '';
+    
+    try {
+        verifyWebhook($payload, $signature, $timestamp, $webhookSecret);
+        $event = json_decode($payload, true);
+        
+        // Handle the event
+        error_log("Received {$event['event']} event");
+        
+        http_response_code(200);
+        echo 'OK';
+    } catch (Exception $e) {
+        error_log("Webhook error: " . $e->getMessage());
+        http_response_code(401);
+        echo 'Invalid signature';
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Handling Events
+
+Example of handling different event types:
+
+```javascript
+app.post('/webhooks/bouncewatch', (req, res) => {
+  const event = req.body;
+  
+  switch (event.event) {
+    case 'enrichment.completed':
+      handleEnrichmentComplete(event);
+      break;
+      
+    case 'enrichment.failed':
+      handleEnrichmentFailed(event);
+      break;
+      
+    case 'credit_low':
+      sendCreditAlert(event.data.credits_remaining);
+      break;
+      
+    case 'credit_depleted':
+      pauseApiCalls();
+      notifyBilling();
+      break;
+      
+    default:
+      console.log(`Unknown event: ${event.event}`);
+  }
+  
+  res.status(200).send('OK');
+});
+
+async function handleEnrichmentComplete(event) {
+  // Fetch the enriched data
+  const response = await fetch(event.data_url, {
+    headers: { 'X-API-Key': API_KEY }
+  });
+  const data = await response.json();
+  
+  // Store in your database
+  await saveCompanyData(event.domain, data);
+  
+  console.log(`Enrichment complete for ${event.domain}`);
+}
+```
+
+## Retry Policy
+
+If your endpoint doesn't respond with a 2xx status code, we'll retry:
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 1 minute |
+| 3 | 5 minutes |
+| 4 | 30 minutes |
+| 5 | 2 hours |
+
+<Note>
+  After 5 failed attempts, the webhook is marked as failed. You can check failed webhooks in the dashboard.
+</Note>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Respond Quickly" icon="bolt">
+    Return 200 immediately, then process async. Don't make the webhook wait for your business logic.
+  </Card>
+  <Card title="Always Verify" icon="shield-check">
+    Always verify webhook signatures. Never trust incoming data without verification.
+  </Card>
+  <Card title="Handle Duplicates" icon="clone">
+    Use `X-BW-Webhook-ID` to detect and handle duplicate deliveries.
+  </Card>
+  <Card title="Use HTTPS" icon="lock">
+    Your webhook endpoint must use HTTPS. We don't send webhooks to HTTP endpoints.
+  </Card>
+</CardGroup>
+
+## Testing Webhooks
+
+Use tools like [ngrok](https://ngrok.com) to test webhooks locally:
+
+```bash
+# Start ngrok tunnel
+ngrok http 3000
+
+# Use the ngrok URL for your webhook
+# https://abc123.ngrok.io/webhooks/bouncewatch
+```
+
+<Tip>
+  You can trigger a test webhook from your dashboard to verify your endpoint is working correctly.
+</Tip>

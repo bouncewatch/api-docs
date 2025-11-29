@@ -1,0 +1,124 @@
+---
+title: "Introduction"
+description: "Access company data instantly with BounceWatch API"
+icon: "rocket"
+---
+
+## What is BounceWatch API?
+
+BounceWatch API is a comprehensive intelligence platform for **startup and company data**. Get detailed information about companies with a single API call.
+
+<CardGroup cols={2}>
+  <Card title="Modular Architecture" icon="cubes">
+    Only fetch the data you need. Flexible usage with 7 different enrichment modules.
+  </Card>
+  <Card title="Two Modes" icon="shuffle">
+    Instant response with **Cached** mode, fresh data with **Realtime** mode.
+  </Card>
+  <Card title="Credit-Based" icon="coins">
+    Pay for what you use. Transparent credit system.
+  </Card>
+  <Card title="Webhook Support" icon="bell">
+    Get notified instantly when realtime enrichment completes.
+  </Card>
+</CardGroup>
+
+## What Data Can You Access?
+
+<AccordionGroup>
+  <Accordion title="Base Data" icon="building">
+    Company identity, contact info, location, employee count, founding date, social media links
+  </Accordion>
+  <Accordion title="Business Intelligence" icon="chart-line">
+    Industry, business model, target market, services offered, market positioning
+  </Accordion>
+  <Accordion title="Technology Stack" icon="microchip">
+    Tools, frameworks, and infrastructure across 100+ technology categories
+  </Accordion>
+  <Accordion title="Funding & Investment" icon="money-bill-trend-up">
+    Funding rounds, investors, valuation, total funding
+  </Accordion>
+  <Accordion title="Team & Hiring" icon="users">
+    Team members, leadership, hiring status, open positions
+  </Accordion>
+  <Accordion title="Growth Signals" icon="signal">
+    Growth score, traffic data, media mentions, traction metrics
+  </Accordion>
+  <Accordion title="Competitors" icon="chess">
+    Similar companies, competitor analysis, market positioning
+  </Accordion>
+</AccordionGroup>
+
+## Use Cases
+
+<Tabs>
+  <Tab title="Investors">
+    **Due Diligence & Deal Flow**
+    
+    - Analyze startup funding history
+    - Review team structure and leadership
+    - Track growth signals
+    
+    ```bash
+    GET /v1/company/startup.com?enrich=funding,team,signals
+    ```
+  </Tab>
+  <Tab title="Sales Teams">
+    **Lead Qualification & Prospecting**
+    
+    - Discover target company tech stacks
+    - Identify growth stage
+    - Find decision makers
+    
+    ```bash
+    GET /v1/company/prospect.com?enrich=business,technology,team
+    ```
+  </Tab>
+  <Tab title="Recruitment">
+    **Talent Intelligence**
+    
+    - Track company hiring status
+    - View open positions
+    - Monitor team size changes
+    
+    ```bash
+    GET /v1/company/target.com?enrich=team
+    ```
+  </Tab>
+  <Tab title="Market Research">
+    **Competitive Intelligence**
+    
+    - Perform competitor analysis
+    - Track industry trends
+    - Monitor technology adoption
+    
+    ```bash
+    GET /v1/company/competitor.com?enrich=business,technology,competitors
+    ```
+  </Tab>
+</Tabs>
+
+## Quick Start
+
+<Steps>
+  <Step title="Get Your API Key">
+    Create your API key from the [Dashboard](https://bouncewatch.com/api-panel/api-keys).
+  </Step>
+  <Step title="Make Your First Request">
+    ```bash
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
+  </Step>
+  <Step title="Add Enrichments">
+    Add module parameters based on your needs.
+    ```bash
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
+  </Step>
+</Steps>
+
+<Card title="Get Started Now" icon="arrow-right" href="/quickstart">
+  Make your first API call in 2 minutes with the Quickstart guide →
+</Card>

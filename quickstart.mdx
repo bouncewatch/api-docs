@@ -1,80 +1,193 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Make your first API call in 2 minutes"
+icon: "bolt"
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+<Check>You need an API key. If you don't have one, [create it here](https://bouncewatch.com/api-panel/api-keys).</Check>
 
-### Step 1: Set up your local environment
+## Your First API Call
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Basic Request">
+    Use the domain name to fetch **base data** for any company:
 
-### Step 2: Deploy your changes
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```javascript JavaScript
+    const response = await fetch('https://api.bouncewatch.com/v1/company/stripe.com', {
+      headers: { 'X-API-Key': 'YOUR_API_KEY' }
+    });
+    const data = await response.json();
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    ```python Python
+    import requests
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    response = requests.get(
+        'https://api.bouncewatch.com/v1/company/stripe.com',
+        headers={'X-API-Key': 'YOUR_API_KEY'}
+    )
+    data = response.json()
+    ```
 
-### Step 3: Go live
+    ```php PHP
+    $ch = curl_init('https://api.bouncewatch.com/v1/company/stripe.com');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'X-API-Key: YOUR_API_KEY'
+    ]);
+    $response = curl_exec($ch);
+    $data = json_decode($response, true);
+    ```
+    </CodeGroup>
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Review the Response">
+    A successful response looks like this:
 
-## Next steps
+    ```json
+    {
+      "success": true,
+      "credits_used": 10,
+      "data": {
+        "company": {
+          "name": "Stripe",
+          "domain": "stripe.com",
+          "description": "Financial infrastructure for the internet",
+          "founded_year": 2010,
+          "employee_count": 8000,
+          "headquarters": {
+            "city": "San Francisco",
+            "country": "United States"
+          },
+          "social": {
+            "linkedin": "https://linkedin.com/company/stripe",
+            "twitter": "https://twitter.com/stripe"
+          }
+        }
+      }
+    }
+    ```
+  </Step>
 
-Now that you have your docs running, explore these key features:
+  <Step title="Add Enrichments">
+    Use the `enrich` parameter to get more data:
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
+
+    ```javascript JavaScript
+    const response = await fetch(
+      'https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team', 
+      { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+    );
+    ```
+
+    ```python Python
+    response = requests.get(
+        'https://api.bouncewatch.com/v1/company/stripe.com',
+        headers={'X-API-Key': 'YOUR_API_KEY'},
+        params={'enrich': 'funding,team'}
+    )
+    ```
+
+    ```php PHP
+    $ch = curl_init('https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+    $response = curl_exec($ch);
+    $data = json_decode($response, true);
+    ```
+    </CodeGroup>
+
+    <Note>
+      This request uses **26 credits**: Base (10) + Funding (10) + Team (6)
+    </Note>
+  </Step>
+</Steps>
+
+## Enrichment Modules
+
+Choose which modules to add:
+
+| Module | Credits | What's Included? |
+|--------|---------|------------------|
+| `business` | +6 | Industry, business model, target market |
+| `technology` | +4 | Tech stack, 100+ technologies |
+| `funding` | +10 | Funding rounds, investors |
+| `team` | +6 | Team members, hiring status |
+| `signals` | +6 | Growth score, traffic data |
+| `competitors` | +8 | Competitors, similar companies |
+
+<Tip>
+  Use comma-separated values for multiple modules: `?enrich=business,technology,funding`
+</Tip>
+
+## Check Your Credit Balance
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.bouncewatch.com/v1/account/credits" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.bouncewatch.com/v1/account/credits', {
+  headers: { 'X-API-Key': 'YOUR_API_KEY' }
+});
+```
+
+```python Python
+response = requests.get(
+    'https://api.bouncewatch.com/v1/account/credits',
+    headers={'X-API-Key': 'YOUR_API_KEY'}
+)
+```
+
+```php PHP
+$ch = curl_init('https://api.bouncewatch.com/v1/account/credits');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+```
+</CodeGroup>
+
+```json Response
+{
+  "success": true,
+  "data": {
+    "credits_remaining": 4580,
+    "credits_total": 5000,
+    "reset_date": "2025-02-01T00:00:00Z"
+  }
+}
+```
+
+
+## Next Steps
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Authentication" icon="key" href="/authentication">
+    API key security and best practices
+  </Card>
+  <Card title="Credits & Modules" icon="coins" href="/credits-and-modules">
+    Credit system and module details
+  </Card>
+  <Card title="Cached API" icon="bolt" href="/api-reference/cached-api">
+    Synchronous data fetching endpoint
+  </Card>
+  <Card title="Realtime API" icon="rotate" href="/api-reference/realtime-api">
+    Fresh data with async enrichment
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

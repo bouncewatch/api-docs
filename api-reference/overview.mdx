@@ -1,0 +1,255 @@
+---
+title: "API Overview"
+description: "Base URL, headers, and error handling"
+icon: "book"
+---
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://api.bouncewatch.com/v1
+```
+
+## Request Headers
+
+Include these headers with every request:
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `X-API-Key` | Yes | Your API authentication key |
+| `Content-Type` | No | `application/json` (for POST requests) |
+| `Accept` | No | `application/json` |
+
+```bash
+curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Accept: application/json"
+```
+
+## Response Format
+
+All responses are returned in JSON format with a consistent structure:
+
+### Successful Response
+
+```json
+{
+  "success": true,
+  "credits_used": 10,
+  "credits_breakdown": {
+    "base": 10,
+    "enrichments": {}
+  },
+  "modules_included": ["base"],
+  "data": {
+    // Response data here
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "success": false,
+  "error": "error_code",
+  "message": "Human-readable error message",
+  "credits_used": 0
+}
+```
+
+## HTTP Status Codes
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `200` | OK | Request successful |
+| `400` | Bad Request | Invalid parameters or malformed request |
+| `401` | Unauthorized | Invalid or missing API key |
+| `402` | Payment Required | Insufficient credits |
+| `404` | Not Found | Company not found |
+| `429` | Too Many Requests | Rate limit exceeded |
+| `500` | Internal Server Error | Server error - please retry |
+
+## Error Codes
+
+<AccordionGroup>
+  <Accordion title="Authentication Errors" icon="lock">
+    | Error Code | Message | Solution |
+    |------------|---------|----------|
+    | `invalid_api_key` | Invalid API key provided | Check your API key is correct |
+    | `missing_api_key` | API key is required | Add `X-API-Key` header |
+    | `api_key_expired` | API key has expired | Generate a new key |
+    | `api_key_disabled` | API key is disabled | Contact support |
+  </Accordion>
+  
+  <Accordion title="Request Errors" icon="circle-exclamation">
+    | Error Code | Message | Solution |
+    |------------|---------|----------|
+    | `invalid_domain` | Invalid domain format | Provide a valid domain (e.g., `stripe.com`) |
+    | `invalid_module` | Invalid enrichment module | Check available modules |
+    | `missing_parameter` | Required parameter missing | Include all required parameters |
+  </Accordion>
+  
+  <Accordion title="Resource Errors" icon="magnifying-glass">
+    | Error Code | Message | Solution |
+    |------------|---------|----------|
+    | `company_not_found` | No company found for domain | Verify the domain exists |
+    | `data_unavailable` | Requested data not available | Try a different module |
+  </Accordion>
+  
+  <Accordion title="Limit Errors" icon="gauge">
+    | Error Code | Message | Solution |
+    |------------|---------|----------|
+    | `insufficient_credits` | Not enough credits | Purchase more credits |
+    | `rate_limit_exceeded` | Too many requests | Wait and retry |
+    | `daily_limit_exceeded` | Daily request limit reached | Wait until reset |
+  </Accordion>
+</AccordionGroup>
+
+## Error Handling Example
+
+<CodeGroup>
+```javascript JavaScript
+async function getCompanyData(domain) {
+  try {
+    const response = await fetch(
+      `https://api.bouncewatch.com/v1/company/${domain}`,
+      { headers: { 'X-API-Key': API_KEY } }
+    );
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      switch (data.error) {
+        case 'company_not_found':
+          console.log(`Company ${domain} not found`);
+          break;
+        case 'insufficient_credits':
+          console.log(`Need ${data.credits_required} credits, have ${data.credits_available}`);
+          break;
+        case 'rate_limit_exceeded':
+          console.log(`Rate limited. Retry after ${data.retry_after}s`);
+          break;
+        default:
+          console.log(`Error: ${data.message}`);
+      }
+      return null;
+    }
+    
+    return data.data;
+  } catch (error) {
+    console.error('Network error:', error);
+    return null;
+  }
+}
+```
+
+```python Python
+import requests
+
+def get_company_data(domain):
+    try:
+        response = requests.get(
+            f'https://api.bouncewatch.com/v1/company/{domain}',
+            headers={'X-API-Key': API_KEY}
+        )
+        data = response.json()
+        
+        if not data['success']:
+            error = data.get('error')
+            if error == 'company_not_found':
+                print(f"Company {domain} not found")
+            elif error == 'insufficient_credits':
+                print(f"Need {data['credits_required']} credits")
+            elif error == 'rate_limit_exceeded':
+                print(f"Rate limited. Retry after {data['retry_after']}s")
+            else:
+                print(f"Error: {data['message']}")
+            return None
+        
+        return data['data']
+    except requests.RequestException as e:
+        print(f"Network error: {e}")
+        return None
+```
+
+```php PHP
+function getCompanyData($domain) {
+    $ch = curl_init("https://api.bouncewatch.com/v1/company/{$domain}");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: ' . API_KEY]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($response === false) {
+        echo "Network error\n";
+        return null;
+    }
+    
+    $data = json_decode($response, true);
+    
+    if (!$data['success']) {
+        switch ($data['error']) {
+            case 'company_not_found':
+                echo "Company {$domain} not found\n";
+                break;
+            case 'insufficient_credits':
+                echo "Need {$data['credits_required']} credits\n";
+                break;
+            case 'rate_limit_exceeded':
+                echo "Rate limited. Retry after {$data['retry_after']}s\n";
+                break;
+            default:
+                echo "Error: {$data['message']}\n";
+        }
+        return null;
+    }
+    
+    return $data['data'];
+}
+```
+</CodeGroup>
+
+## Pagination
+
+For endpoints that return lists (like request history), pagination is supported:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number |
+| `limit` | integer | 50 | Results per page (max 100) |
+
+```bash
+GET /v1/account/history?page=2&limit=25
+```
+
+```json Response
+{
+  "success": true,
+  "data": {
+    "items": [...],
+    "pagination": {
+      "current_page": 2,
+      "total_pages": 7,
+      "total_records": 168,
+      "per_page": 25
+    }
+  }
+}
+```
+
+## API Versioning
+
+The API version is included in the URL path. Currently, we're on **v1**.
+
+```
+https://api.bouncewatch.com/v1/...
+```
+
+<Note>
+  We maintain backward compatibility within major versions. Breaking changes will be announced in advance and released under a new version.
+</Note>

@@ -1,43 +1,76 @@
-# Mintlify Starter Kit
+# BounceWatch API Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Access company data instantly with BounceWatch API - a comprehensive intelligence platform for startup and company data.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+<p align="center">
+  <a href="https://bouncewatch.com">Website</a> •
+  <a href="https://docs.bouncewatch.com">Documentation</a> •
+  <a href="https://bouncewatch.com/api-panel/api-keys">Get API Key</a>
+</p>
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+## What is BounceWatch API?
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+BounceWatch API provides detailed information about companies with a single API call. Get access to:
 
-## Development
+- **Base Data** - Company identity, contact info, location, employee count, founding date, social media links
+- **Business Intelligence** - Industry, business model, target market, services offered, market positioning
+- **Technology Stack** - Tools, frameworks, and infrastructure across 100+ technology categories
+- **Funding & Investment** - Funding rounds, investors, valuation, total funding
+- **Team & Hiring** - Team members, leadership, hiring status, open positions
+- **Growth Signals** - Growth score, traffic data, media mentions, traction metrics
+- **Competitors** - Similar companies, competitor analysis, market positioning
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+## Key Features
 
+- **Modular Architecture** - Only fetch the data you need with 7 different enrichment modules
+- **Two Modes** - Instant response with Cached mode, fresh data with Realtime mode
+- **Credit-Based** - Pay for what you use with a transparent credit system
+- **Webhook Support** - Get notified instantly when realtime enrichment completes
+
+## Quick Start
+
+```bash
+curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+  -H "X-API-Key: YOUR_API_KEY"
 ```
-npm i -g mint
+
+Add enrichment modules based on your needs:
+
+```bash
+curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team" \
+  -H "X-API-Key: YOUR_API_KEY"
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+## Documentation
 
+Visit our full documentation at [docs.bouncewatch.com](https://docs.bouncewatch.com) for:
+
+- [Introduction](https://docs.bouncewatch.com/introduction) - Overview of BounceWatch API
+- [Quickstart Guide](https://docs.bouncewatch.com/quickstart) - Get started in 2 minutes
+- [Authentication](https://docs.bouncewatch.com/authentication) - API key management
+- [API Reference](https://docs.bouncewatch.com/api-reference/overview) - Complete endpoint documentation
+- [Credits & Modules](https://docs.bouncewatch.com/credits-and-modules) - Pricing and module details
+
+## Use Cases
+
+- **Investors** - Due diligence, deal flow analysis, funding history
+- **Sales Teams** - Lead qualification, prospecting, tech stack discovery
+- **Recruitment** - Talent intelligence, hiring status tracking
+- **Market Research** - Competitive intelligence, industry trends
+
+## Getting Your API Key
+
+Create your API key from the [BounceWatch Dashboard](https://bouncewatch.com/api-panel/api-keys).
+
+## Development (Documentation Site)
+
+To run the documentation site locally:
+
+```bash
+npm i -g mintlify
+mintlify dev
 ```
-mint dev
-```
 
-View your local preview at `http://localhost:3000`.
+## License
 
-## Publishing changes
-
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+See [LICENSE](LICENSE) for details.

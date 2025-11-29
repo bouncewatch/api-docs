@@ -1,0 +1,323 @@
+---
+title: "Cached API"
+description: "Get instant company data from our database"
+icon: "bolt"
+---
+
+## Overview
+
+The Cached API returns company data instantly from our database. This is the default mode and is ideal for most use cases.
+
+<Info>
+  **Response time:** Under 100ms for most requests
+</Info>
+
+## Endpoint
+
+<ParamField path="domain" type="string" required>
+  Company domain (e.g., `stripe.com`, `openai.com`)
+</ParamField>
+
+```
+GET /v1/company/{domain}
+```
+
+## Parameters
+
+<ParamField query="enrich" type="string">
+  Comma-separated list of enrichment modules to include.
+  
+  Available modules: `business`, `technology`, `funding`, `team`, `signals`, `competitors`
+</ParamField>
+
+## Request Examples
+
+<Tabs>
+  <Tab title="Base Data Only">
+    Get basic company information (10 credits):
+    
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
+    
+    ```javascript JavaScript
+    const response = await fetch(
+      'https://api.bouncewatch.com/v1/company/stripe.com',
+      { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+    );
+    const data = await response.json();
+    ```
+    
+    ```python Python
+    import requests
+    
+    response = requests.get(
+        'https://api.bouncewatch.com/v1/company/stripe.com',
+        headers={'X-API-Key': 'YOUR_API_KEY'}
+    )
+    data = response.json()
+    ```
+
+    ```php PHP
+    $ch = curl_init('https://api.bouncewatch.com/v1/company/stripe.com');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+    $response = curl_exec($ch);
+    $data = json_decode($response, true);
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="With Enrichments">
+    Add funding and team data (26 credits):
+    
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
+    
+    ```javascript JavaScript
+    const response = await fetch(
+      'https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team',
+      { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+    );
+    ```
+    
+    ```python Python
+    response = requests.get(
+        'https://api.bouncewatch.com/v1/company/stripe.com',
+        headers={'X-API-Key': 'YOUR_API_KEY'},
+        params={'enrich': 'funding,team'}
+    )
+    ```
+
+    ```php PHP
+    $ch = curl_init('https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+    $response = curl_exec($ch);
+    $data = json_decode($response, true);
+    ```
+    </CodeGroup>
+  </Tab>
+  
+  <Tab title="Full Profile">
+    Get all available data (50 credits):
+    
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=business,technology,funding,team,signals,competitors" \
+      -H "X-API-Key: YOUR_API_KEY"
+    ```
+    
+    ```javascript JavaScript
+    const modules = ['business', 'technology', 'funding', 'team', 'signals', 'competitors'];
+    const response = await fetch(
+      `https://api.bouncewatch.com/v1/company/stripe.com?enrich=${modules.join(',')}`,
+      { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+    );
+    ```
+    
+    ```python Python
+    response = requests.get(
+        'https://api.bouncewatch.com/v1/company/stripe.com',
+        headers={'X-API-Key': 'YOUR_API_KEY'},
+        params={'enrich': 'business,technology,funding,team,signals,competitors'}
+    )
+    ```
+
+    ```php PHP
+    $modules = ['business', 'technology', 'funding', 'team', 'signals', 'competitors'];
+    $url = 'https://api.bouncewatch.com/v1/company/stripe.com?enrich=' . implode(',', $modules);
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+    $response = curl_exec($ch);
+    $data = json_decode($response, true);
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Response Structure
+
+```json
+{
+  "success": true,
+  "credits_used": 26,
+  "credits_breakdown": {
+    "base": 10,
+    "enrichments": {
+      "funding": 10,
+      "team": 6
+    }
+  },
+  "modules_included": ["base", "funding", "team"],
+  "data": {
+    "company": {
+      "name": "Stripe",
+      "domain": "stripe.com",
+      "description": "Financial infrastructure for the internet",
+      "tagline": "Payments infrastructure for the internet",
+      "founded_year": 2010,
+      "employee_count": 8000,
+      "employee_range": "5001-10000",
+      "headquarters": {
+        "city": "San Francisco",
+        "state": "California",
+        "country": "United States"
+      },
+      "social": {
+        "linkedin": "https://linkedin.com/company/stripe",
+        "twitter": "https://twitter.com/stripe",
+        "facebook": "https://facebook.com/stripe"
+      },
+      "contact": {
+        "email": "support@stripe.com",
+        "phone": null
+      }
+    },
+    "funding": {
+      "total_funding": 8700000000,
+      "total_funding_formatted": "$8.7B",
+      "last_funding_date": "2023-03-15",
+      "last_funding_type": "Series I",
+      "last_funding_amount": 6500000000,
+      "valuation": 50000000000,
+      "valuation_formatted": "$50B",
+      "rounds": [
+        {
+          "type": "Series I",
+          "date": "2023-03-15",
+          "amount": 6500000000,
+          "investors": ["Andreessen Horowitz", "Sequoia Capital"]
+        }
+      ],
+      "investors": [
+        {
+          "name": "Sequoia Capital",
+          "type": "Venture Capital",
+          "lead_investor": true
+        }
+      ]
+    },
+    "team": {
+      "total_employees": 8000,
+      "hiring_status": "actively_hiring",
+      "open_positions": 145,
+      "leadership": [
+        {
+          "name": "Patrick Collison",
+          "title": "CEO & Co-founder",
+          "linkedin": "https://linkedin.com/in/patrickcollison"
+        }
+      ],
+      "departments": {
+        "engineering": 3200,
+        "sales": 1800,
+        "operations": 1500
+      }
+    }
+  }
+}
+```
+
+## Response Fields
+
+<AccordionGroup>
+  <Accordion title="Base Company Data" icon="building" defaultOpen>
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `name` | string | Company name |
+    | `domain` | string | Primary domain |
+    | `description` | string | Company description |
+    | `tagline` | string | Company tagline |
+    | `founded_year` | integer | Year founded |
+    | `employee_count` | integer | Estimated employee count |
+    | `employee_range` | string | Employee range bucket |
+    | `headquarters` | object | HQ location details |
+    | `social` | object | Social media links |
+    | `contact` | object | Contact information |
+  </Accordion>
+  
+  <Accordion title="Funding Data" icon="money-bill-trend-up">
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `total_funding` | integer | Total funding in USD |
+    | `last_funding_date` | string | Most recent funding date |
+    | `last_funding_type` | string | Type of last round |
+    | `valuation` | integer | Latest valuation in USD |
+    | `rounds` | array | List of funding rounds |
+    | `investors` | array | List of investors |
+  </Accordion>
+  
+  <Accordion title="Team Data" icon="users">
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `total_employees` | integer | Total employee count |
+    | `hiring_status` | string | Current hiring status |
+    | `open_positions` | integer | Number of open jobs |
+    | `leadership` | array | Key team members |
+    | `departments` | object | Employee breakdown by department |
+  </Accordion>
+  
+  <Accordion title="Business Data" icon="chart-line">
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `industry` | string | Primary industry |
+    | `sub_industry` | string | Sub-industry |
+    | `business_model` | string | B2B, B2C, etc. |
+    | `target_market` | array | Target market segments |
+    | `services` | array | Products/services offered |
+  </Accordion>
+  
+  <Accordion title="Technology Data" icon="microchip">
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `technologies` | array | List of technologies used |
+    | `categories` | object | Technologies by category |
+    | `tech_score` | integer | Technology adoption score |
+  </Accordion>
+  
+  <Accordion title="Signals Data" icon="signal">
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `growth_score` | integer | Overall growth score (0-100) |
+    | `web_traffic` | object | Traffic estimates |
+    | `media_mentions` | integer | Recent media mentions |
+    | `hiring_velocity` | string | Hiring trend |
+  </Accordion>
+  
+  <Accordion title="Competitors Data" icon="chess">
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `competitors` | array | Direct competitors |
+    | `similar_companies` | array | Similar companies |
+    | `market_position` | string | Market positioning |
+  </Accordion>
+</AccordionGroup>
+
+## When to Use Cached API
+
+<CardGroup cols={2}>
+  <Card title="Best For" icon="check" color="#22c55e">
+    - Quick lookups and searches
+    - Dashboard displays
+    - High-volume requests
+    - Data that doesn't need to be real-time
+    - Lead enrichment workflows
+  </Card>
+  <Card title="Consider Realtime For" icon="rotate" color="#3b82f6">
+    - When you need the freshest data
+    - Deep due diligence
+    - Tracking recent changes
+    - Mission-critical decisions
+  </Card>
+</CardGroup>
+
+<Card title="Need Fresher Data?" icon="rotate" href="/api-reference/realtime-api">
+  Use the Realtime API to get fresh data collected on-demand →
+</Card>

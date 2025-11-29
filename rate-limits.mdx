@@ -1,0 +1,220 @@
+---
+title: "Rate Limits"
+description: "Understanding API rate limits and how to handle them"
+icon: "gauge-high"
+---
+
+## Rate Limit Overview
+
+Rate limits protect the API from abuse and ensure fair usage for all customers. Limits are applied **per API key**.
+
+## Plan Limits
+
+| Plan | Requests/Minute | Requests/Day | Credits/Month |
+|------|-----------------|--------------|---------------|
+| Trial | 10 | 500 | 1,000 |
+| Basic | 60 | 3,000 | 10,000 |
+| Premium | 120 | 10,000 | 50,000 |
+| Enterprise | Custom | Custom | Custom |
+
+<Info>
+  Need higher limits? [Contact us](mailto:sales@bouncewatch.com) for enterprise plans.
+</Info>
+
+## Rate Limit Headers
+
+Every API response includes rate limit information in the headers:
+
+```http
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 45
+X-RateLimit-Reset: 1625097600
+```
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed per minute |
+| `X-RateLimit-Remaining` | Requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the limit resets |
+
+## Handling Rate Limits
+
+When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "success": false,
+  "error": "rate_limit_exceeded",
+  "message": "Rate limit exceeded. Please retry after 45 seconds.",
+  "retry_after": 45
+}
+```
+
+### Implementation Examples
+
+<Tabs>
+  <Tab title="JavaScript">
+    ```javascript
+    async function fetchWithRetry(url, options, maxRetries = 3) {
+      for (let i = 0; i < maxRetries; i++) {
+        const response = await fetch(url, options);
+        
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After') || Math.pow(2, i);
+          console.log(`Rate limited. Retrying in ${retryAfter}s...`);
+          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+          continue;
+        }
+        
+        return response;
+      }
+      throw new Error('Max retries exceeded');
+    }
+
+    // Usage
+    const response = await fetchWithRetry(
+      'https://api.bouncewatch.com/v1/company/stripe.com',
+      { headers: { 'X-API-Key': API_KEY } }
+    );
+    ```
+  </Tab>
+  
+  <Tab title="Python">
+    ```python
+    import time
+    import requests
+
+    def fetch_with_retry(url, headers, max_retries=3):
+        for i in range(max_retries):
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 429:
+                retry_after = int(response.headers.get('Retry-After', 2 ** i))
+                print(f"Rate limited. Retrying in {retry_after}s...")
+                time.sleep(retry_after)
+                continue
+            
+            return response
+        
+        raise Exception('Max retries exceeded')
+
+    # Usage
+    response = fetch_with_retry(
+        'https://api.bouncewatch.com/v1/company/stripe.com',
+        headers={'X-API-Key': API_KEY}
+    )
+    ```
+  </Tab>
+  
+  <Tab title="PHP">
+    ```php
+    function fetchWithRetry($url, $headers, $maxRetries = 3) {
+        for ($i = 0; $i < $maxRetries; $i++) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode === 429) {
+                $retryAfter = pow(2, $i);
+                echo "Rate limited. Retrying in {$retryAfter}s...\n";
+                sleep($retryAfter);
+                continue;
+            }
+            
+            return $response;
+        }
+        
+        throw new Exception('Max retries exceeded');
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Implement Exponential Backoff" icon="clock-rotate-left">
+    When rate limited, wait progressively longer between retries (1s, 2s, 4s, 8s...)
+  </Card>
+  <Card title="Monitor Rate Limit Headers" icon="eye">
+    Check `X-RateLimit-Remaining` before making requests to avoid hitting limits
+  </Card>
+  <Card title="Queue Your Requests" icon="list-check">
+    Implement a request queue to spread requests evenly across time
+  </Card>
+  <Card title="Cache Responses" icon="database">
+    Cache company data to reduce the number of API calls needed
+  </Card>
+</CardGroup>
+
+## Request Queuing Example
+
+```javascript
+class RateLimitedQueue {
+  constructor(requestsPerMinute) {
+    this.queue = [];
+    this.interval = 60000 / requestsPerMinute;
+    this.processing = false;
+  }
+
+  async add(requestFn) {
+    return new Promise((resolve, reject) => {
+      this.queue.push({ requestFn, resolve, reject });
+      this.process();
+    });
+  }
+
+  async process() {
+    if (this.processing || this.queue.length === 0) return;
+    
+    this.processing = true;
+    const { requestFn, resolve, reject } = this.queue.shift();
+    
+    try {
+      const result = await requestFn();
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    }
+    
+    setTimeout(() => {
+      this.processing = false;
+      this.process();
+    }, this.interval);
+  }
+}
+
+// Usage: 60 requests per minute
+const queue = new RateLimitedQueue(60);
+
+const companies = ['stripe.com', 'openai.com', 'airbnb.com'];
+const results = await Promise.all(
+  companies.map(domain => 
+    queue.add(() => fetchCompany(domain))
+  )
+);
+```
+
+## Rate Limit Webhook
+
+Get notified when you're approaching rate limits:
+
+```bash
+POST /v1/account/webhook
+```
+
+```json
+{
+  "webhook_url": "https://your-domain.com/webhooks/bouncewatch",
+  "events": ["rate_limit_warning", "rate_limit_exceeded"]
+}
+```
+
+<Card title="Configure Webhooks" icon="bell" href="/webhooks">
+  Set up webhooks to monitor rate limits and credits →
+</Card>
