@@ -15,7 +15,6 @@ The Account API allows you to manage your API account, check credit balance, mon
 | `GET /v1/account/info` | Get account information |
 | `GET /v1/account/credits` | Check credit balance |
 | `GET /v1/account/usage` | View usage statistics |
-| `GET /v1/account/history` | Get request history |
 | `POST /v1/account/webhook` | Configure webhooks |
 
 ---
@@ -68,7 +67,7 @@ $data = json_decode($response, true);
       "name": "John Doe",
       "email": "john@company.com",
       "company_name": "Acme Corp",
-      "plan_type": "premium",
+      "plan_type": "professional",
       "status": "active",
       "created_at": "2024-01-15T10:00:00Z"
     },

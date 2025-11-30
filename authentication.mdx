@@ -58,17 +58,14 @@ $data = json_decode($response, true);
   <Step title="Sign In">
     Go to [BounceWatch Dashboard](https://bouncewatch.com/api-panel/api-keys)
   </Step>
-  <Step title="Create API Key">
-    Click "Create New Key" and give it a descriptive name
-  </Step>
-  <Step title="Copy & Store Securely">
-    Copy your API key immediately - it won't be shown again
+  <Step title="Copy Your API Key">
+    Your API key is displayed on the dashboard. Copy it to use in your requests.
   </Step>
 </Steps>
 
-<Warning>
-  Your API key is shown only once. If you lose it, you'll need to create a new one.
-</Warning>
+<Tip>
+  You can always view your API key from the dashboard whenever you need it.
+</Tip>
 
 ## Security Best Practices
 
@@ -161,23 +158,20 @@ Store your API key securely using environment variables:
 
 ## Key Rotation
 
-Regularly rotate your API keys for security:
+For enhanced security, you can regenerate your API key periodically:
 
 <Steps>
-  <Step title="Create New Key">
-    Generate a new API key in the dashboard
+  <Step title="Regenerate Key">
+    Click "Regenerate" in the dashboard to create a new API key. This will immediately invalidate your current key.
   </Step>
   <Step title="Update Your Application">
-    Update your environment variables with the new key
+    Update your environment variables with the new key.
   </Step>
   <Step title="Test">
-    Verify your application works with the new key
-  </Step>
-  <Step title="Revoke Old Key">
-    Delete the old API key from the dashboard
+    Verify your application works with the new key.
   </Step>
 </Steps>
 
-<Info>
-  We recommend rotating your API keys every 90 days.
-</Info>
+<Warning>
+  Regenerating your API key will immediately invalidate the old one. Make sure to update all your applications before regenerating.
+</Warning>
