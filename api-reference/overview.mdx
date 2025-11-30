@@ -214,42 +214,4 @@ function getCompanyData($domain) {
 ```
 </CodeGroup>
 
-## Pagination
 
-For endpoints that return lists (like request history), pagination is supported:
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | integer | 1 | Page number |
-| `limit` | integer | 50 | Results per page (max 100) |
-
-```bash
-GET /v1/account/history?page=2&limit=25
-```
-
-```json Response
-{
-  "success": true,
-  "data": {
-    "items": [...],
-    "pagination": {
-      "current_page": 2,
-      "total_pages": 7,
-      "total_records": 168,
-      "per_page": 25
-    }
-  }
-}
-```
-
-## API Versioning
-
-The API version is included in the URL path. Currently, we're on **v1**.
-
-```
-https://api.bouncewatch.com/v1/...
-```
-
-<Note>
-  We maintain backward compatibility within major versions. Breaking changes will be announced in advance and released under a new version.
-</Note>

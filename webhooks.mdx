@@ -445,16 +445,32 @@ If your endpoint doesn't respond with a 2xx status code, we'll retry:
 
 ## Testing Webhooks
 
-Use tools like [ngrok](https://ngrok.com) to test webhooks locally:
+The easiest way to test webhooks is using [webhook.site](https://webhook.site):
 
-```bash
-# Start ngrok tunnel
-ngrok http 3000
-
-# Use the ngrok URL for your webhook
-# https://abc123.ngrok.io/webhooks/bouncewatch
-```
+<Steps>
+  <Step title="Get Your Test URL">
+    Visit [webhook.site](https://webhook.site) - you'll automatically get a unique URL like:
+    ```
+    https://webhook.site/abc123-def456-ghi789
+    ```
+  </Step>
+  <Step title="Configure the Webhook">
+    Use this URL when configuring your webhook via the API:
+    ```bash
+    curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
+      -H "X-API-Key: YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "webhook_url": "https://webhook.site/YOUR-UNIQUE-ID",
+        "events": ["enrichment.completed", "credit_low"]
+      }'
+    ```
+  </Step>
+  <Step title="View Incoming Webhooks">
+    All webhook requests will appear in real-time on your webhook.site dashboard. You can inspect headers, payload, and response details.
+  </Step>
+</Steps>
 
 <Tip>
-  You can trigger a test webhook from your dashboard to verify your endpoint is working correctly.
+  webhook.site is free and requires no setup - perfect for quick testing. For local development, you can also use [ngrok](https://ngrok.com) to expose your localhost.
 </Tip>
