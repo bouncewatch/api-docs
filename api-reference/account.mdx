@@ -12,10 +12,10 @@ The Account API allows you to manage your API account, check credit balance, mon
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /v1/account/info` | Get account information |
-| `GET /v1/account/credits` | Check credit balance |
-| `GET /v1/account/usage` | View usage statistics |
-| `POST /v1/account/webhook` | Configure webhooks |
+| `GET /api/v1/account/info` | Get account information |
+| `GET /api/v1/account/credits` | Check credit balance |
+| `GET /api/v1/account/usage` | View usage statistics |
+| `POST /api/v1/account/webhook` | Configure webhooks |
 
 ---
 
@@ -24,17 +24,17 @@ The Account API allows you to manage your API account, check credit balance, mon
 Retrieve your account details and plan information.
 
 ```
-GET /v1/account/info
+GET /api/v1/account/info
 ```
 
 <CodeGroup>
 ```bash cURL
-curl -X GET "https://api.bouncewatch.com/v1/account/info" \
+curl -X GET "https://api.bouncewatch.com/api/v1/account/info" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.bouncewatch.com/v1/account/info', {
+const response = await fetch('https://api.bouncewatch.com/api/v1/account/info', {
   headers: { 'X-API-Key': 'YOUR_API_KEY' }
 });
 const data = await response.json();
@@ -42,13 +42,13 @@ const data = await response.json();
 
 ```python Python
 response = requests.get(
-    'https://api.bouncewatch.com/v1/account/info',
+    'https://api.bouncewatch.com/api/v1/account/info',
     headers={'X-API-Key': 'YOUR_API_KEY'}
 )
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/v1/account/info');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/info');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
 $response = curl_exec($ch);
@@ -87,30 +87,30 @@ $data = json_decode($response, true);
 Check your current credit balance and usage.
 
 ```
-GET /v1/account/credits
+GET /api/v1/account/credits
 ```
 
 <CodeGroup>
 ```bash cURL
-curl -X GET "https://api.bouncewatch.com/v1/account/credits" \
+curl -X GET "https://api.bouncewatch.com/api/v1/account/credits" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.bouncewatch.com/v1/account/credits', {
+const response = await fetch('https://api.bouncewatch.com/api/v1/account/credits', {
   headers: { 'X-API-Key': 'YOUR_API_KEY' }
 });
 ```
 
 ```python Python
 response = requests.get(
-    'https://api.bouncewatch.com/v1/account/credits',
+    'https://api.bouncewatch.com/api/v1/account/credits',
     headers={'X-API-Key': 'YOUR_API_KEY'}
 )
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/v1/account/credits');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/credits');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
 $response = curl_exec($ch);
@@ -141,7 +141,7 @@ $data = json_decode($response, true);
 View detailed usage statistics for your account.
 
 ```
-GET /v1/account/usage
+GET /api/v1/account/usage
 ```
 
 <ParamField query="period" type="string" default="month">
@@ -150,27 +150,27 @@ GET /v1/account/usage
 
 <CodeGroup>
 ```bash cURL
-curl -X GET "https://api.bouncewatch.com/v1/account/usage?period=month" \
+curl -X GET "https://api.bouncewatch.com/api/v1/account/usage?period=month" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  'https://api.bouncewatch.com/v1/account/usage?period=month',
+  'https://api.bouncewatch.com/api/v1/account/usage?period=month',
   { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
 );
 ```
 
 ```python Python
 response = requests.get(
-    'https://api.bouncewatch.com/v1/account/usage',
+    'https://api.bouncewatch.com/api/v1/account/usage',
     headers={'X-API-Key': 'YOUR_API_KEY'},
     params={'period': 'month'}
 )
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/v1/account/usage?period=month');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/usage?period=month');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
 $response = curl_exec($ch);
@@ -215,7 +215,7 @@ $data = json_decode($response, true);
 Set up webhooks for account notifications.
 
 ```
-POST /v1/account/webhook
+POST /api/v1/account/webhook
 ```
 
 <ParamField body="webhook_url" type="string" required>
@@ -241,7 +241,7 @@ POST /v1/account/webhook
 
 <CodeGroup>
 ```bash cURL
-curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
+curl -X POST "https://api.bouncewatch.com/api/v1/account/webhook" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -251,7 +251,7 @@ curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.bouncewatch.com/v1/account/webhook', {
+const response = await fetch('https://api.bouncewatch.com/api/v1/account/webhook', {
   method: 'POST',
   headers: {
     'X-API-Key': 'YOUR_API_KEY',
@@ -266,7 +266,7 @@ const response = await fetch('https://api.bouncewatch.com/v1/account/webhook', {
 
 ```python Python
 response = requests.post(
-    'https://api.bouncewatch.com/v1/account/webhook',
+    'https://api.bouncewatch.com/api/v1/account/webhook',
     headers={
         'X-API-Key': 'YOUR_API_KEY',
         'Content-Type': 'application/json'
@@ -279,7 +279,7 @@ response = requests.post(
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/v1/account/webhook');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/webhook');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [

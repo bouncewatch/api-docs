@@ -17,7 +17,7 @@ BounceWatch API provides detailed information about companies with a single API 
 - **Technology Stack** - Tools, frameworks, and infrastructure across 100+ technology categories
 - **Funding & Investment** - Funding rounds, investors, valuation, total funding
 - **Team & Hiring** - Team members, leadership, hiring status, open positions
-- **Growth Signals** - Growth score, traffic data, media mentions, traction metrics
+- **Signals/Highlights** - 40 signal types including partnerships, product launches, funding, team changes, rumors, and metric-based highlights
 - **Competitors** - Similar companies, competitor analysis, market positioning
 
 ## Key Features
@@ -30,14 +30,14 @@ BounceWatch API provides detailed information about companies with a single API 
 ## Quick Start
 
 ```bash
-curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 Add enrichment modules based on your needs:
 
 ```bash
-curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team" \
+curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com?enrich=funding,team" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 

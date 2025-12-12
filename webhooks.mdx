@@ -29,17 +29,21 @@ Webhooks allow you to receive real-time HTTP notifications when events occur in 
   </Step>
 </Steps>
 
+<Tip>
+  🧪 **Want to test webhooks quickly?** Use [webhook.site](https://webhook.site) to get a free test URL instantly - no setup required! [See testing guide →](#testing-webhooks)
+</Tip>
+
 ## Configuring Webhooks
 
 ### Via API
 
 ```bash
-POST /v1/account/webhook
+POST /api/v1/account/webhook
 ```
 
 <CodeGroup>
 ```bash cURL
-curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
+curl -X POST "https://api.bouncewatch.com/api/v1/account/webhook" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -49,7 +53,7 @@ curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.bouncewatch.com/v1/account/webhook', {
+const response = await fetch('https://api.bouncewatch.com/api/v1/account/webhook', {
   method: 'POST',
   headers: {
     'X-API-Key': 'YOUR_API_KEY',
@@ -67,7 +71,7 @@ const { data } = await response.json();
 
 ```python Python
 response = requests.post(
-    'https://api.bouncewatch.com/v1/account/webhook',
+    'https://api.bouncewatch.com/api/v1/account/webhook',
     headers={'X-API-Key': 'YOUR_API_KEY'},
     json={
         'webhook_url': 'https://your-domain.com/webhooks/bouncewatch',
@@ -78,7 +82,7 @@ response = requests.post(
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/v1/account/webhook');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/webhook');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -457,7 +461,7 @@ The easiest way to test webhooks is using [webhook.site](https://webhook.site):
   <Step title="Configure the Webhook">
     Use this URL when configuring your webhook via the API:
     ```bash
-    curl -X POST "https://api.bouncewatch.com/v1/account/webhook" \
+    curl -X POST "https://api.bouncewatch.com/api/v1/account/webhook" \
       -H "X-API-Key: YOUR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{

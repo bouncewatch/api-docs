@@ -84,15 +84,26 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
     - Department breakdown
   </Accordion>
   
-  <Accordion title="Growth Signals" icon="signal">
-    Growth indicators and traction metrics.
+  <Accordion title={<>Signals/Highlights <Badge color="green" size="sm">New</Badge></>} icon="signal">
+    40 different signal types across 8 categories.
     
-    - Growth score
-    - Web traffic estimates
-    - Media mentions
-    - Social engagement
-    - Hiring velocity
-    - Product updates
+    **Business & Partnerships:** Partnership Announced, Major Customer Win, Accepted to Program
+    
+    **Product & Growth:** New Product Launched, New Feature Launched, Mobile App Launched, Growth Metrics Shared, Revenue Metrics Shared
+    
+    **Expansion:** Expansion Announced, New Office Opened
+    
+    **Recognition:** Award Received, Certification Achieved
+    
+    **Team Changes:** Key Hire Announced, Key Exit Announced, Layoffs Announced
+    
+    **Regulatory & Strategy:** Regulatory Approval, Shutdown Announced, Pivot Announced, Not Active
+    
+    **Events:** Event Participation
+    
+    **Rumors & Intents:** Acquisition Rumor, IPO Rumor, Partnership Talks, Expansion Plan, Layoff Rumor, Leadership Change Rumor, Shutdown Risk
+    
+    **Metric-Based Highlights:** Employee Count Change, LinkedIn Follower Change, Website Visitors Change, Website Content Change, Mentioned on News, Hiring for Key Role, New Funding Received
   </Accordion>
   
   <Accordion title="Competitors" icon="chess">
@@ -114,10 +125,10 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
     - Get company overview with employee count, founding year, and location
     - Analyze complete funding history with rounds, valuations, and investors
     - Review leadership team and key personnel
-    - Track growth signals and traction metrics
+    - Track signals and highlights for traction insights
     
     ```bash
-    GET /v1/company/startup.com?enrich=funding,team,signals
+    GET /api/v1/company/startup.com?enrich=funding,team,signals
     ```
   </Tab>
   <Tab title="Sales Teams">
@@ -129,7 +140,7 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
     - Find key decision makers in leadership
     
     ```bash
-    GET /v1/company/prospect.com?enrich=business,technology,team
+    GET /api/v1/company/prospect.com?enrich=business,technology,team
     ```
   </Tab>
   <Tab title="Recruitment">
@@ -141,7 +152,7 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
     - Monitor employee growth trends
     
     ```bash
-    GET /v1/company/target.com?enrich=team
+    GET /api/v1/company/target.com?enrich=team
     ```
   </Tab>
   <Tab title="Market Research">
@@ -153,7 +164,7 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
     - Track industry benchmarks
     
     ```bash
-    GET /v1/company/competitor.com?enrich=business,technology,competitors
+    GET /api/v1/company/competitor.com?enrich=business,technology,competitors
     ```
   </Tab>
 </Tabs>
@@ -166,14 +177,14 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
   </Step>
   <Step title="Make Your First Request">
     ```bash
-    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com" \
+    curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com" \
       -H "X-API-Key: YOUR_API_KEY"
     ```
   </Step>
   <Step title="Add Enrichments">
     Add module parameters based on your needs.
     ```bash
-    curl -X GET "https://api.bouncewatch.com/v1/company/stripe.com?enrich=funding,team" \
+    curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com?enrich=funding,team" \
       -H "X-API-Key: YOUR_API_KEY"
     ```
   </Step>

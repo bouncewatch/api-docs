@@ -21,11 +21,11 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
 | **Technology** | +4 | Tech stack, frameworks, tools (100+ technologies) |
 | **Funding** | +10 | Investment history, investors, valuation |
 | **Team** | +6 | Leadership, employees, hiring activity |
-| **Signals** | +6 | Growth score, traffic, media mentions |
+| **Signals** | +16 | 40 signal types across 8 categories |
 | **Competitors** | +8 | Similar companies, competitive landscape |
 
 <Note>
-  **Maximum cost per request:** 50 credits (Base + all enrichment modules)
+  **Maximum cost per request:** 60 credits (Base + all enrichment modules)
 </Note>
 
 ## Enrichment Modules
@@ -45,7 +45,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     - Legal entity details
     
     ```bash
-    GET /v1/company/stripe.com
+    GET /api/v1/company/stripe.com
     # Returns base data only - 10 credits
     ```
   </Accordion>
@@ -62,7 +62,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     - Market positioning
     
     ```bash
-    GET /v1/company/stripe.com?enrich=business
+    GET /api/v1/company/stripe.com?enrich=business
     # 16 credits (10 base + 6 business)
     ```
   </Accordion>
@@ -80,7 +80,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     - Security solutions
     
     ```bash
-    GET /v1/company/stripe.com?enrich=technology
+    GET /api/v1/company/stripe.com?enrich=technology
     # 14 credits (10 base + 4 technology)
     ```
   </Accordion>
@@ -97,7 +97,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     - Lead investors
     
     ```bash
-    GET /v1/company/stripe.com?enrich=funding
+    GET /api/v1/company/stripe.com?enrich=funding
     # 20 credits (10 base + 10 funding)
     ```
   </Accordion>
@@ -114,25 +114,28 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     - Department breakdown
     
     ```bash
-    GET /v1/company/stripe.com?enrich=team
+    GET /api/v1/company/stripe.com?enrich=team
     # 16 credits (10 base + 6 team)
     ```
   </Accordion>
   
-  <Accordion title="Signals (+6 credits)" icon="signal">
-    Growth indicators and traction metrics.
+  <Accordion title="Signals/Highlights (+16 credits)" icon="signal">
+    40 different signal types across 8 categories.
     
-    **Data Points:**
-    - Growth score
-    - Web traffic estimates
-    - Media mentions
-    - Social engagement
-    - Hiring velocity
-    - Product updates
+    **Categories:**
+    - Business & Partnerships (3 signals)
+    - Product & Growth (5 signals)
+    - Expansion (2 signals)
+    - Recognition (2 signals)
+    - Team Changes (3 signals)
+    - Regulatory & Strategy (4 signals)
+    - Events (1 signal)
+    - Rumors & Intents (7 signals)
+    - Metric-Based Highlights (7 signals)
     
     ```bash
-    GET /v1/company/stripe.com?enrich=signals
-    # 16 credits (10 base + 6 signals)
+    GET /api/v1/company/stripe.com?enrich=signals
+    # 26 credits (10 base + 16 signals)
     ```
   </Accordion>
   
@@ -146,7 +149,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     - Competitive positioning
     
     ```bash
-    GET /v1/company/stripe.com?enrich=competitors
+    GET /api/v1/company/stripe.com?enrich=competitors
     # 18 credits (10 base + 8 competitors)
     ```
   </Accordion>
@@ -159,7 +162,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     **26 credits**
     
     ```bash
-    GET /v1/company/startup.com?enrich=funding,team
+    GET /api/v1/company/startup.com?enrich=funding,team
     ```
     
     Perfect for:
@@ -169,10 +172,10 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
   </Tab>
   
   <Tab title="Sales Prospecting">
-    **26 credits**
+    **36 credits**
     
     ```bash
-    GET /v1/company/prospect.com?enrich=business,technology,signals
+    GET /api/v1/company/prospect.com?enrich=business,technology,signals
     ```
     
     Perfect for:
@@ -185,7 +188,7 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
     **28 credits**
     
     ```bash
-    GET /v1/company/competitor.com?enrich=business,technology,competitors
+    GET /api/v1/company/competitor.com?enrich=business,technology,competitors
     ```
     
     Perfect for:
@@ -195,10 +198,10 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
   </Tab>
   
   <Tab title="Full Profile">
-    **50 credits**
+    **60 credits**
     
     ```bash
-    GET /v1/company/target.com?enrich=business,technology,funding,team,signals,competitors
+    GET /api/v1/company/target.com?enrich=business,technology,funding,team,signals,competitors
     ```
     
     Complete company intelligence with all available data.
@@ -209,12 +212,12 @@ BounceWatch uses a credit-based pricing system. Each API request consumes credit
 
 <CodeGroup>
 ```bash cURL
-curl -X GET "https://api.bouncewatch.com/v1/account/credits" \
+curl -X GET "https://api.bouncewatch.com/api/v1/account/credits" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.bouncewatch.com/v1/account/credits', {
+const response = await fetch('https://api.bouncewatch.com/api/v1/account/credits', {
   headers: { 'X-API-Key': 'YOUR_API_KEY' }
 });
 const data = await response.json();
@@ -223,14 +226,14 @@ console.log(`Credits remaining: ${data.data.credits_remaining}`);
 
 ```python Python
 response = requests.get(
-    'https://api.bouncewatch.com/v1/account/credits',
+    'https://api.bouncewatch.com/api/v1/account/credits',
     headers={'X-API-Key': 'YOUR_API_KEY'}
 )
 print(f"Credits remaining: {response.json()['data']['credits_remaining']}")
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/v1/account/credits');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/credits');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
 $response = curl_exec($ch);

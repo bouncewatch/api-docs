@@ -74,7 +74,7 @@ When you exceed the rate limit, you'll receive a `429 Too Many Requests` respons
 
     // Usage
     const response = await fetchWithRetry(
-      'https://api.bouncewatch.com/v1/company/stripe.com',
+      'https://api.bouncewatch.com/api/v1/company/stripe.com',
       { headers: { 'X-API-Key': API_KEY } }
     );
     ```
@@ -101,7 +101,7 @@ When you exceed the rate limit, you'll receive a `429 Too Many Requests` respons
 
     # Usage
     response = fetch_with_retry(
-        'https://api.bouncewatch.com/v1/company/stripe.com',
+        'https://api.bouncewatch.com/api/v1/company/stripe.com',
         headers={'X-API-Key': API_KEY}
     )
     ```
