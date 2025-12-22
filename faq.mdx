@@ -1,0 +1,322 @@
+---
+title: "FAQ & Troubleshooting"
+description: "Common questions and solutions for BounceWatch API"
+icon: "circle-question"
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="How do I get an API key?" icon="key">
+    1. Go to [BounceWatch Dashboard](https://bouncewatch.com/api-panel/api-keys)
+    2. Sign in or create an account
+    3. Your API key will be displayed on the dashboard
+    4. Copy it and add to your requests as `X-API-Key` header
+  </Accordion>
+
+  <Accordion title="What's the difference between Cached and Realtime mode?" icon="shuffle">
+    **Cached Mode (Default):**
+    - Instant response (< 250ms)
+    - Returns data from our database
+    - Best for high-volume requests and dashboards
+    
+    **Realtime Mode:**
+    - Fresh data collected on-demand
+    - Takes 2-10 minutes to complete
+    - Results sent via webhook
+    - Best for due diligence and critical decisions
+    
+    ```bash
+    # Cached (default)
+    GET /api/v1/company/stripe.com
+    
+    # Realtime
+    GET /api/v1/company/stripe.com?mode=realtime
+    ```
+  </Accordion>
+
+  <Accordion title="How are credits calculated?" icon="coins">
+    Each request costs credits based on modules requested:
+    
+    | Module | Credits |
+    |--------|---------|
+    | Base (always included) | 10 |
+    | Business | +6 |
+    | Technology | +4 |
+    | Funding | +10 |
+    | Team | +6 |
+    | Signals | +16 |
+    | Competitors | +8 |
+    
+    **Example:** Base + Funding + Team = 10 + 10 + 6 = **26 credits**
+    
+    <Note>
+      If you query the same domain within 24 hours, you won't be charged again.
+    </Note>
+  </Accordion>
+
+  <Accordion title="What happens if a company is not in your database?" icon="magnifying-glass">
+    When you request a domain that's not in our database:
+    
+    1. We automatically trigger a **realtime enrichment**
+    2. You receive a `202 Accepted` response with a `batch_id`
+    3. Fresh data is collected and sent to your webhook
+    4. You can also poll the status endpoint
+    
+    This ensures you always get data, even for new companies.
+  </Accordion>
+
+  <Accordion title="Do credits expire?" icon="clock">
+    Credits are tied to your billing cycle:
+    
+    - **Monthly plans:** Credits reset at the start of each billing month
+    - **Pay-as-you-go:** Purchased credits don't expire
+    
+    Check your credit balance anytime:
+    ```bash
+    GET /api/v1/account/credits
+    ```
+  </Accordion>
+
+  <Accordion title="Can I test the API before purchasing?" icon="flask">
+    Yes! New accounts receive **1,000 free trial credits** to test the API.
+    
+    Trial accounts have slightly lower rate limits:
+    - 10 requests/minute
+    - 200 requests/day
+  </Accordion>
+
+  <Accordion title="What data sources do you use?" icon="database">
+    BounceWatch aggregates data from multiple public sources:
+    
+    - Company websites and blogs
+    - LinkedIn company pages
+    - News articles and press releases
+    - Public funding databases
+    - Job boards and career pages
+    - Technology detection platforms
+    - Government registries and public filings
+    - Social media and professional networks
+    
+    Data freshness varies by source and company activity level.
+  </Accordion>
+
+  <Accordion title="How often is the data updated?" icon="rotate">
+    Data freshness depends on the company and data type:
+    
+    | Data Type | Typical Freshness |
+    |-----------|-------------------|
+    | Base info | 1-4 weeks |
+    | Funding | Real-time (when announced) |
+    | Team/Jobs | 1-2 weeks |
+    | Technology | 2-4 weeks |
+    | Signals | Real-time |
+    
+    Use **Realtime mode** when you need the absolute freshest data.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Troubleshooting
+
+### Authentication Errors
+
+<Accordion title="401 Unauthorized - Invalid API key" icon="lock" defaultOpen>
+  **Problem:** Your API key is not recognized.
+  
+  **Solutions:**
+  1. Check for typos or extra spaces in your API key
+  2. Ensure you're using the header `X-API-Key` (case-sensitive)
+  3. Verify your key hasn't been regenerated in the dashboard
+  4. Make sure the key is from the correct environment (production vs test)
+  
+  ```bash
+  # Correct
+  curl -H "X-API-Key: bw_live_abc123..." https://api.bouncewatch.com/api/v1/company/stripe.com
+  
+  # Wrong header name
+  curl -H "Authorization: Bearer bw_live_abc123..." # ❌ Won't work
+  curl -H "Api-Key: bw_live_abc123..." # ❌ Won't work
+  ```
+</Accordion>
+
+<Accordion title="401 Unauthorized - API key missing" icon="key">
+  **Problem:** No API key provided in the request.
+  
+  **Solution:** Add the `X-API-Key` header to your request:
+  
+  ```bash
+  curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com" \
+    -H "X-API-Key: YOUR_API_KEY"
+  ```
+</Accordion>
+
+### Credit Errors
+
+<Accordion title="402 Payment Required - Insufficient credits" icon="credit-card">
+  **Problem:** Not enough credits for the requested modules.
+  
+  **Response:**
+  ```json
+  {
+    "success": false,
+    "error": "insufficient_credits",
+    "message": "Request requires 26 credits, you have 15 remaining",
+    "credits_required": 26,
+    "credits_available": 15
+  }
+  ```
+  
+  **Solutions:**
+  1. Request fewer enrichment modules
+  2. Purchase additional credits
+  3. Wait for monthly credit reset (if on monthly plan)
+  4. Check if you recently queried this domain (no charge for 24h)
+</Accordion>
+
+### Rate Limit Errors
+
+<Accordion title="429 Too Many Requests - Rate limit exceeded" icon="gauge-high">
+  **Problem:** You've exceeded your rate limit.
+  
+  **Response:**
+  ```json
+  {
+    "success": false,
+    "error": "rate_limit_exceeded",
+    "message": "Rate limit exceeded. Please retry after 45 seconds.",
+    "retry_after": 45
+  }
+  ```
+  
+  **Solutions:**
+  1. Wait for the `retry_after` period
+  2. Implement exponential backoff in your code
+  3. Spread requests evenly over time
+  4. Upgrade to a higher plan for increased limits
+  
+  **Rate limits by plan:**
+  | Plan | Requests/Minute |
+  |------|-----------------|
+  | Free Trial | 10 |
+  | Starter | 30 |
+  | Professional | 60 |
+  | Business | 90 |
+  | Enterprise | 120 |
+</Accordion>
+
+### Domain Errors
+
+<Accordion title="400 Bad Request - Invalid domain format" icon="globe">
+  **Problem:** The domain format is not valid.
+  
+  **Solutions:**
+  - Use clean domains without protocols: `stripe.com` ✅
+  - Don't include `https://` or `www.`: `https://www.stripe.com` ❌
+  - Don't include paths: `stripe.com/about` ❌
+  
+  ```bash
+  # Correct
+  GET /api/v1/company/stripe.com
+  
+  # These also work (we clean them automatically)
+  GET /api/v1/company/https://stripe.com
+  GET /api/v1/company/www.stripe.com
+  ```
+</Accordion>
+
+<Accordion title="404 Not Found - Company not found" icon="building">
+  **Problem:** The domain exists but we don't have data for it.
+  
+  **What happens:**
+  - For new domains, we automatically trigger realtime enrichment
+  - You'll receive a `202 Accepted` with a `batch_id`
+  - Data will be sent to your webhook when ready
+  
+  **If you get this error repeatedly:**
+  - The domain might not be a company website
+  - The company might be too small or new
+  - Check if the domain is spelled correctly
+</Accordion>
+
+### Webhook Errors
+
+<Accordion title="Webhooks not being received" icon="bell-slash">
+  **Problem:** Your endpoint isn't receiving webhook notifications.
+  
+  **Checklist:**
+  1. **HTTPS required:** Your webhook URL must use HTTPS
+  2. **Publicly accessible:** Your endpoint must be reachable from the internet
+  3. **Responds quickly:** Return 200 OK within 30 seconds
+  4. **Check firewall:** Allow traffic from BounceWatch IPs
+  5. **Verify URL:** Ensure the URL is correctly configured
+  
+  **Test your endpoint:**
+  ```bash
+  # Use webhook.site for testing
+  curl -X POST "https://api.bouncewatch.com/api/v1/account/webhook" \
+    -H "X-API-Key: YOUR_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{"webhook_url": "https://webhook.site/YOUR-ID", "events": ["enrichment.completed"]}'
+  ```
+</Accordion>
+
+<Accordion title="Webhook signature verification failing" icon="shield-xmark">
+  **Problem:** Your signature validation is rejecting webhooks.
+  
+  **Common causes:**
+  1. **Wrong secret:** Using old webhook secret after regeneration
+  2. **Payload modified:** Parsing/reformatting the raw payload before verification
+  3. **Clock skew:** Server time significantly different from UTC
+  
+  **Debug steps:**
+  ```javascript
+  // Log raw values before verification
+  console.log('Timestamp:', timestamp);
+  console.log('Signature:', signature);
+  console.log('Payload (raw):', payload);
+  console.log('Secret (first 10 chars):', secret.substring(0, 10));
+  ```
+</Accordion>
+
+### Realtime Enrichment Errors
+
+<Accordion title="Enrichment stuck in 'processing' status" icon="spinner">
+  **Problem:** Realtime enrichment hasn't completed.
+  
+  **Expected times:**
+  - Most enrichments complete in 3-8 minutes
+  - Complex requests with all modules may take up to 12 minutes
+  
+  **If stuck for over 30 minutes:**
+  1. Check the status endpoint for error messages
+  2. The domain might have limited public data
+  3. Contact support if the issue persists
+  
+  ```bash
+  GET /api/v1/enrichment/{batch_id}/status
+  ```
+</Accordion>
+
+<Accordion title="Enrichment completed but data is sparse" icon="box-open">
+  **Problem:** Realtime enrichment completed but some fields are null.
+  
+  **Reasons:**
+  - Company has limited online presence
+  - Specific data type not publicly available
+  - Company is new or very small
+  
+  **Tips:**
+  - Not all fields are available for all companies
+  - Larger, more active companies have more data
+  - Some data (funding, team) requires public disclosure
+</Accordion>
+
+---
+
+## Need More Help?
+
+<Card title="Contact Support" icon="envelope" href="mailto:sedat@bouncewatch.com">
+  Email us for technical support or questions about the API
+</Card>

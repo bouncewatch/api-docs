@@ -22,22 +22,18 @@
         "group": "Core Concepts",
         "pages": [
           "credits-and-modules",
-          "rate-limits"
+          "rate-limits",
+          "webhooks"
         ]
       },
       {
         "group": "API Reference",
         "pages": [
           "api-reference/overview",
+          "api-reference/response-schema",
           "api-reference/cached-api",
           "api-reference/realtime-api",
           "api-reference/account"
-        ]
-      },
-      {
-        "group": "Webhooks",
-        "pages": [
-          "webhooks"
         ]
       }
     ]
@@ -48,6 +44,10 @@
   },
   "navbar": {
     "links": [
+      {
+        "label": "FAQ",
+        "href": "/faq"
+      },
       {
         "label": "Support",
         "href": "mailto:sedat@bouncewatch.com"

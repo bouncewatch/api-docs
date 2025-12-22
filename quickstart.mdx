@@ -8,6 +8,10 @@ icon: "bolt"
 
 <Check>You need an API key. If you don't have one, [create it here](https://bouncewatch.com/api-panel/api-keys).</Check>
 
+<Tip>
+  **Prefer Postman?** Download our [Postman Collection](https://bouncewatch.com/postman/BounceWatch_Postman_Collection.zip) to get started quickly with pre-configured requests.
+</Tip>
+
 ## Your First API Call
 
 <Steps>
@@ -99,12 +103,7 @@ icon: "bolt"
         headers={'X-API-Key': 'YOUR_API_KEY'},
         params={'enrich': 'funding,team'}
     )
-    ```
-
-    ```php PHP
-    $ch = curl_init('https://api.bouncewatch.com/api/v1/company/stripe.com?enrich=funding,team');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+data = response.json()
     $response = curl_exec($ch);
     $data = json_decode($response, true);
     ```

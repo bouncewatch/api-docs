@@ -1,0 +1,1022 @@
+---
+title: "Response Schema"
+description: "Complete API response structure and field reference"
+icon: "sitemap"
+---
+
+## Overview
+
+This page documents the complete response structure for all BounceWatch API endpoints. Use this as a reference to understand exactly what data you'll receive.
+
+<Info>
+  All responses include a `success` boolean and follow a consistent structure. Data is returned in the `data` object.
+</Info>
+
+## Response Wrapper
+
+Every API response follows this structure:
+
+```json
+{
+  "success": true,
+  "mode": "cached",
+  "data": {
+    // Module data here
+  },
+  "credits_used": 26,
+  "credits_breakdown": {
+    "base": 10,
+    "enrichments": {
+      "funding": 10,
+      "team": 6
+    }
+  },
+  "modules_included": ["base", "funding", "team"],
+  "from_recent_enrichment": false,
+  "from_recent_cache": false,
+  "credits_remaining": 4974
+}
+```
+
+<Info>
+  If `from_recent_enrichment` or `from_recent_cache` is `true`, you're receiving cached data from a request made within the last 24 hours - no additional credits are charged.
+</Info>
+
+---
+
+## Base Company Data (Always Included)
+
+<ParamField body="data.company" type="object">
+  Base company information, always included with every request (10 credits).
+</ParamField>
+
+```json
+{
+  "data": {
+    "company": {
+      // Identity
+      "name": "Stripe",
+      "description": "Financial infrastructure platform for the internet",
+      "founded_year": 2010,
+      "company_status": "active",
+
+      // Contact
+      "phone": "+1-888-926-2289",
+      "email": "support@stripe.com",
+      "domain": "stripe.com",
+      "linkedin_url": "https://www.linkedin.com/company/stripe",
+      "facebook_url": "https://www.facebook.com/stripe",
+      "twitter_url": "https://twitter.com/stripe",
+
+      // Location
+      "headquarter_country": "United States",
+      "headquarter_city": "San Francisco",
+      "registered_address": "354 Oyster Point Blvd, South San Francisco, CA 94080",
+      "office_locations": [
+        "London, United Kingdom",
+        "Dublin, Ireland",
+        "Singapore"
+      ],
+
+      // Team Size
+      "employee_count": 8000,
+      "employee_range": "5001-10000",
+
+      // Legal Information (UK Companies House data if available)
+      "legal_name": "Stripe Payments UK Ltd",
+      "company_number": "07920850",
+      "company_type": "ltd",
+      "date_of_creation": "2012-01-23",
+      "jurisdiction": "england-wales",
+      "sic_codes": ["62012", "64999"]
+    }
+  }
+}
+```
+
+### Base Company Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Company display name |
+| `description` | string | Company description/about |
+| `founded_year` | integer | Year the company was founded |
+| `company_status` | string | Operational status: `active`, `acquired`, `closed` |
+| `phone` | string | Primary phone number |
+| `email` | string | Primary contact email |
+| `domain` | string | Company website domain |
+| `linkedin_url` | string | LinkedIn company page URL |
+| `facebook_url` | string | Facebook page URL |
+| `twitter_url` | string | Twitter/X profile URL |
+| `headquarter_country` | string | HQ country name |
+| `headquarter_city` | string | HQ city name |
+| `registered_address` | string | Official registered address |
+| `office_locations` | array | List of other office locations |
+| `employee_count` | integer | Exact employee count (if available) |
+| `employee_range` | string | Employee range bucket |
+| `legal_name` | string | Official legal entity name |
+| `company_number` | string | Company registration number |
+| `company_type` | string | Legal entity type |
+| `date_of_creation` | string | Company registration date |
+| `jurisdiction` | string | Legal jurisdiction |
+| `sic_codes` | array | Industry classification codes |
+
+---
+
+## Business Enrichment (+6 credits)
+
+<ParamField query="enrich" type="string">
+  Add `business` to the enrich parameter: `?enrich=business`
+</ParamField>
+
+```json
+{
+  "data": {
+    "business": {
+      // Industry Classification
+      "industries_count": 3,
+      "industries": ["Financial Services", "FinTech", "Payments"],
+      
+      // Business Model
+      "business_model": ["B2B", "SaaS", "Platform"],
+      "revenue_model": ["Transaction Fees", "Subscription"],
+      "target_audience": "Developers and businesses of all sizes",
+      
+      // Taxonomy
+      "taxonomy_count": 5,
+      "taxonomy": ["Payment Processing", "API Platform", "Developer Tools", "E-commerce", "SaaS"],
+      
+      // Services
+      "services_count": 4,
+      "services": [
+        {
+          "name": "Payment Processing",
+          "description": "Accept payments online and in-person"
+        },
+        {
+          "name": "Billing",
+          "description": "Subscription and invoicing platform"
+        },
+        {
+          "name": "Connect",
+          "description": "Payments for platforms and marketplaces"
+        },
+        {
+          "name": "Atlas",
+          "description": "Startup incorporation service"
+        }
+      ],
+      
+      // Certifications
+      "certificates_count": 2,
+      "certificates_and_compliance": [
+        {
+          "name": "PCI DSS Level 1",
+          "description": "Payment Card Industry Data Security Standard"
+        },
+        {
+          "name": "SOC 2 Type II",
+          "description": "Service Organization Control certification"
+        }
+      ],
+      
+      // Market Positioning
+      "market_problems_count": 2,
+      "market_problems": [
+        {
+          "title": "Complex Payment Integration",
+          "description": "Businesses struggle with fragmented payment systems"
+        },
+        {
+          "title": "Global Expansion",
+          "description": "Difficulty accepting payments across borders"
+        }
+      ],
+      
+      // Geographic Focus
+      "target_countries_count": 3,
+      "target_countries": [
+        {
+          "country": "United States",
+          "country_code": "US",
+          "ai_reasoning": "Primary market with strong developer ecosystem",
+          "confidence": "high"
+        },
+        {
+          "country": "United Kingdom",
+          "country_code": "GB",
+          "ai_reasoning": "Major European financial hub",
+          "confidence": "high"
+        },
+        {
+          "country": "Germany",
+          "country_code": "DE",
+          "ai_reasoning": "Largest European economy",
+          "confidence": "medium"
+        }
+      ],
+      
+      "potential_target_countries_count": 2,
+      "potential_target_countries": [
+        {
+          "country": "Brazil",
+          "country_code": "BR",
+          "ai_reasoning": "Growing e-commerce market",
+          "confidence": "medium"
+        },
+        {
+          "country": "India",
+          "country_code": "IN",
+          "ai_reasoning": "Large developer community and growing digital payments",
+          "confidence": "medium"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Business Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `industries_count` | integer | Number of industries |
+| `industries` | array | Industry classifications |
+| `business_model` | array | Business model types: B2B, B2C, SaaS, Platform, etc. |
+| `revenue_model` | array | Revenue model types: Subscription, Transaction Fees, etc. |
+| `target_audience` | string | Primary customer description |
+| `taxonomy_count` | integer | Number of taxonomy tags |
+| `taxonomy` | array | Business category tags |
+| `services_count` | integer | Number of services |
+| `services` | array | Products and services offered |
+| `services[].name` | string | Service name |
+| `services[].description` | string | Service description |
+| `certificates_count` | integer | Number of certifications |
+| `certificates_and_compliance` | array | Certifications and compliance |
+| `market_problems_count` | integer | Number of market problems |
+| `market_problems` | array | Problems the company solves |
+| `target_countries_count` | integer | Number of target countries |
+| `target_countries` | array | Current focus countries |
+| `potential_target_countries_count` | integer | Number of potential countries |
+| `potential_target_countries` | array | Future expansion targets |
+
+---
+
+## Technology Enrichment (+4 credits)
+
+<ParamField query="enrich" type="string">
+  Add `technology` to the enrich parameter: `?enrich=technology`
+</ParamField>
+
+```json
+{
+  "data": {
+    "technology": {
+      "total_technologies": 47,
+      "categories_count": 12,
+      
+      // Flat list of all technology names
+      "technologies": [
+        "React", "Node.js", "Ruby", "PostgreSQL", "Redis",
+        "AWS", "Kubernetes", "Docker", "Terraform", "Datadog"
+      ],
+      
+      // Grouped by category
+      "technology_stack": {
+        "JavaScript Frameworks": [
+          {
+            "name": "React",
+            "description": "A JavaScript library for building user interfaces"
+          },
+          {
+            "name": "Next.js",
+            "description": "React framework for production"
+          }
+        ],
+        "Backend": [
+          {
+            "name": "Node.js",
+            "description": "JavaScript runtime environment"
+          },
+          {
+            "name": "Ruby on Rails",
+            "description": "Server-side web application framework"
+          }
+        ],
+        "Database": [
+          {
+            "name": "PostgreSQL",
+            "description": "Open source relational database"
+          },
+          {
+            "name": "Redis",
+            "description": "In-memory data structure store"
+          }
+        ],
+        "Cloud Infrastructure": [
+          {
+            "name": "Amazon Web Services",
+            "description": "Cloud computing platform"
+          },
+          {
+            "name": "Google Cloud Platform",
+            "description": "Cloud computing services"
+          }
+        ],
+        "DevOps": [
+          {
+            "name": "Kubernetes",
+            "description": "Container orchestration platform"
+          },
+          {
+            "name": "Docker",
+            "description": "Container platform"
+          }
+        ],
+        "Analytics": [
+          {
+            "name": "Segment",
+            "description": "Customer data platform"
+          },
+          {
+            "name": "Amplitude",
+            "description": "Product analytics platform"
+          }
+        ]
+      },
+      
+      "last_updated": "2025-12-15T10:30:00Z"
+    }
+  }
+}
+```
+
+### Technology Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_technologies` | integer | Total number of technologies detected |
+| `categories_count` | integer | Number of technology categories |
+| `technologies` | array | Flat list of all technology names |
+| `technology_stack` | object | Technologies grouped by category |
+| `technology_stack[category]` | array | List of technologies in category |
+| `technology_stack[category][].name` | string | Technology name |
+| `technology_stack[category][].description` | string | Technology description |
+| `last_updated` | string | When technology data was last updated |
+
+---
+
+## Funding Enrichment (+10 credits)
+
+<ParamField query="enrich" type="string">
+  Add `funding` to the enrich parameter: `?enrich=funding`
+</ParamField>
+
+```json
+{
+  "data": {
+    "funding": {
+      // Summary
+      "total_funding": 8700000000,
+      "funding_stage": "Series I",
+      "last_funding_date": "2023-03-15",
+      "funding_round_count": 12,
+      "last_valuation": 50000000000,
+      
+      // Investment History (newest first)
+      "investment_history": [
+        {
+          "date": "2023-03-15",
+          "stage": "Series I",
+          "amount": 6500000000,
+          "amount_usd": 6500000000,
+          "currency": "USD",
+          "valuation": 50000000000,
+          "valuation_usd": 50000000000,
+          "investors": ["Andreessen Horowitz", "Sequoia Capital", "GIC"]
+        },
+        {
+          "date": "2021-03-14",
+          "stage": "Series H",
+          "amount": 600000000,
+          "amount_usd": 600000000,
+          "currency": "USD",
+          "valuation": 95000000000,
+          "valuation_usd": 95000000000,
+          "investors": ["Sequoia Capital", "Allianz X", "Fidelity"]
+        }
+      ],
+      
+      // All Investors
+      "investors_count": 42,
+      "investors": [
+        "Sequoia Capital",
+        "Andreessen Horowitz",
+        "General Catalyst",
+        "Founders Fund",
+        "Tiger Global",
+        "GIC",
+        "Fidelity Investments"
+      ],
+      
+      // Notable Investors (with details)
+      "notable_investors_count": 5,
+      "notable_investors": [
+        {
+          "name": "Sequoia Capital",
+          "logo": "https://bouncewatch.com/storage/investors/sequoia.png",
+          "domain": "sequoiacap.com"
+        },
+        {
+          "name": "Andreessen Horowitz",
+          "logo": "https://bouncewatch.com/storage/investors/a16z.png",
+          "domain": "a16z.com"
+        }
+      ],
+      
+      "lead_investors": [],
+      "acquisitions": []
+    }
+  }
+}
+```
+
+### Funding Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_funding` | integer | Total funding amount in USD |
+| `funding_stage` | string | Current/last funding stage |
+| `last_funding_date` | string | Date of most recent funding (Y-m-d format) |
+| `funding_round_count` | integer | Total number of funding rounds |
+| `last_valuation` | number | Most recent valuation in USD (nullable) |
+| `investment_history` | array | All funding rounds (newest first) |
+| `investment_history[].date` | string | Round date (Y-m-d format) |
+| `investment_history[].stage` | string | Round type (Seed, Series A, etc.) |
+| `investment_history[].amount` | number | Amount raised (original currency) |
+| `investment_history[].amount_usd` | number | Amount in USD |
+| `investment_history[].currency` | string | Original currency code |
+| `investment_history[].valuation` | number | Valuation at this round (nullable) |
+| `investment_history[].valuation_usd` | number | Valuation in USD (nullable) |
+| `investment_history[].investors` | array | Investors in this round |
+| `investors_count` | integer | Total unique investors |
+| `investors` | array | List of all investor names |
+| `notable_investors_count` | integer | Number of notable investors |
+| `notable_investors` | array | Notable investors with details |
+| `notable_investors[].name` | string | Investor name |
+| `notable_investors[].logo` | string | Investor logo URL |
+| `notable_investors[].domain` | string | Investor website domain |
+
+---
+
+## Team Enrichment (+6 credits)
+
+<ParamField query="enrich" type="string">
+  Add `team` to the enrich parameter: `?enrich=team`
+</ParamField>
+
+```json
+{
+  "data": {
+    "team": {
+      // Team Members
+      "team_count": 8,
+      "team_members": [
+        {
+          "name": "Patrick Collison",
+          "position": "CEO & Co-founder",
+          "linkedin_url": "https://www.linkedin.com/in/patrickcollison",
+          "country": "United States",
+          "city": "San Francisco",
+          "nationality": "Irish",
+          "biography": "Patrick Collison is the co-founder and CEO of Stripe...",
+          "experience": [
+            {
+              "company": "Stripe",
+              "position": "CEO & Co-founder",
+              "description": "Leading the company's vision and strategy",
+              "start_date": "2010-01-01",
+              "end_date": null,
+              "is_current": true,
+              "location": "United States"
+            },
+            {
+              "company": "Auctomatic",
+              "position": "Co-founder",
+              "description": "Online auction management",
+              "start_date": "2007-01-01",
+              "end_date": "2008-01-01",
+              "is_current": false,
+              "location": "Canada"
+            }
+          ],
+          "education": [
+            {
+              "school": "MIT",
+              "degree": "Computer Science (did not complete)",
+              "description": null,
+              "start_date": "2009-01-01",
+              "end_date": "2010-01-01",
+              "location": "United States"
+            }
+          ]
+        }
+      ],
+      
+      // Employee Growth Metrics
+      "monthly_growth": {
+        "change": 120,
+        "percentage": 1.5,
+        "from": 7880,
+        "to": 8000,
+        "period_start": "November 2025",
+        "period_end": "December 2025"
+      },
+      "three_month_growth": {
+        "change": 400,
+        "percentage": 5.3,
+        "from": 7600,
+        "to": 8000,
+        "period_start": "September 2025",
+        "period_end": "December 2025"
+      },
+      "six_month_growth": {
+        "change": 800,
+        "percentage": 11.1,
+        "from": 7200,
+        "to": 8000,
+        "period_start": "June 2025",
+        "period_end": "December 2025"
+      },
+      
+      // Historical Data
+      "historical_employee_data": [
+        {"month_name": "December 2025", "employee_count": 8000},
+        {"month_name": "November 2025", "employee_count": 7880},
+        {"month_name": "October 2025", "employee_count": 7760}
+      ],
+      
+      // Hiring Activity
+      "job_listings_count": 145,
+      "job_titles_count": 89,
+      "job_titles": [
+        "Software Engineer",
+        "Product Manager",
+        "Data Scientist",
+        "Solutions Architect"
+      ],
+      "job_locations_count": 12,
+      "job_locations": [
+        "San Francisco",
+        "New York",
+        "London",
+        "Dublin",
+        "Singapore"
+      ],
+      "job_countries_count": 8,
+      "job_countries": [
+        "United States",
+        "United Kingdom",
+        "Ireland",
+        "Singapore",
+        "Japan"
+      ],
+      "hiring_status": "actively_hiring",
+      
+      // Key Role Openings
+      "key_role_openings_count": 5,
+      "key_role_openings": [
+        {
+          "title": "Head of Engineering, Payments",
+          "location": "San Francisco",
+          "country": "United States",
+          "posted_date": "2025-12-10"
+        },
+        {
+          "title": "VP of Product",
+          "location": "Remote",
+          "country": "United States",
+          "posted_date": "2025-12-05"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Team Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `team_count` | integer | Number of team members in database |
+| `team_members` | array | Team member profiles |
+| `team_members[].name` | string | Full name |
+| `team_members[].position` | string | Current job title |
+| `team_members[].linkedin_url` | string | LinkedIn profile URL |
+| `team_members[].country` | string | Current country |
+| `team_members[].city` | string | Current city |
+| `team_members[].nationality` | string | Nationality |
+| `team_members[].biography` | string | Bio/about text |
+| `team_members[].experience` | array | Work experience history |
+| `team_members[].education` | array | Education history |
+| `monthly_growth` | object | Month-over-month employee change |
+| `three_month_growth` | object | 3-month employee change |
+| `six_month_growth` | object | 6-month employee change |
+| `historical_employee_data` | array | Monthly employee counts |
+| `job_listings_count` | integer | Total open positions |
+| `job_titles_count` | integer | Unique job titles |
+| `job_titles` | array | List of job titles |
+| `job_locations_count` | integer | Unique hiring locations |
+| `job_locations` | array | Cities with open positions |
+| `job_countries_count` | integer | Countries with open positions |
+| `job_countries` | array | Countries hiring in |
+| `hiring_status` | string | `actively_hiring`, `hiring`, `passive` |
+| `key_role_openings_count` | integer | Leadership positions open |
+| `key_role_openings` | array | Leadership/senior positions |
+
+---
+
+## Signals Enrichment (+16 credits)
+
+<ParamField query="enrich" type="string">
+  Add `signals` to the enrich parameter: `?enrich=signals`
+</ParamField>
+
+<Info>
+  **Highlights** are AI-detected signals from LinkedIn posts and news articles. Each highlight includes structured entities (partner names, product names, cities, etc.) extracted from the content.
+</Info>
+
+```json
+{
+  "data": {
+    "signals": {
+      // Highlights (Recent Activity/News)
+      "highlights_count": 12,
+      "highlights": [
+        {
+          "type": "funding",
+          "title": "Raised $6.5B Series I",
+          "date": "March 15, 2023",
+          "description": "Secured Series I funding of $6.5B"
+        },
+        {
+          "type": "business",
+          "title": "Partnership Announced",
+          "date": "February 2023",
+          "description": "Stripe partners with Amazon for payment processing",
+          "entities": {
+            "partner_name": "Amazon",
+            "partnership_type": "strategic collaboration"
+          }
+        },
+        {
+          "type": "product",
+          "title": "New Product Launched",
+          "date": "January 2023",
+          "description": "Stripe launches Stripe Tax for automated tax calculation",
+          "entities": {
+            "product_name": "Stripe Tax",
+            "category": "Tax Automation"
+          }
+        },
+        {
+          "type": "expansion",
+          "title": "Expansion Announced",
+          "date": "January 2023",
+          "description": "Opening new offices in Toronto and Singapore",
+          "entities": {
+            "new_city": "Toronto, Singapore",
+            "expansion_type": "office opening"
+          }
+        },
+        {
+          "type": "traction",
+          "title": "Website traffic increased 15%",
+          "date": "December 2024",
+          "description": "Monthly website visitors increased by 15%"
+        },
+        {
+          "type": "hiring",
+          "title": "Team size increased 8%",
+          "date": "December 2024",
+          "description": "Employee count increased by 8%"
+        }
+      ],
+      
+      // LinkedIn Metrics
+      "linkedin_metrics": {
+        "followers": 1250000,
+        "change_percentage": 3.2,
+        "last_post_date": "2025-12-20",
+        "period_start": "2025-11-01",
+        "period_end": "2025-12-01"
+      },
+      
+      // AI-Powered Insights
+      "ai_insights": {
+        "insight": "Stripe continues to demonstrate strong market positioning with consistent product launches and strategic partnerships. The recent Series I funding at $50B valuation, though lower than previous peaks, indicates investor confidence in long-term growth.",
+        "growth_momentum": "high",
+        "trajectory": "accelerating",
+        "key_indicators": [
+          "New Funding Received",
+          "Partnership Announced",
+          "Expansion Announced",
+          "Hiring For Key Role"
+        ],
+        "next_likely_move": "Based on recent hiring patterns and expansion announcements, Stripe is likely preparing for international expansion, particularly in emerging markets."
+      }
+    }
+  }
+}
+```
+
+### Signals Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `highlights_count` | integer | Number of highlights |
+| `highlights` | array | Recent company activity/signals |
+| `highlights[].type` | string | Signal type (see Signal Types below) |
+| `highlights[].title` | string | Signal title |
+| `highlights[].description` | string | Detailed description |
+| `highlights[].date` | string | When it occurred (e.g., "March 15, 2023" or "December 2024") |
+| `highlights[].source` | string | Data source: `linkedin_post` or `news_article` (optional) |
+| `highlights[].entities` | object | Extracted entities from the signal (optional) |
+| `linkedin_metrics` | object | LinkedIn follower metrics |
+| `linkedin_metrics.followers` | integer | Current follower count |
+| `linkedin_metrics.change_percentage` | number | Change percentage over period |
+| `linkedin_metrics.last_post_date` | string | Date of last LinkedIn post |
+| `ai_insights.insight` | string | AI-generated summary |
+| `ai_insights.growth_momentum` | string | `high`, `medium`, `low` |
+| `ai_insights.trajectory` | string | `accelerating`, `steady`, `declining` |
+| `ai_insights.key_indicators` | array | Key signals driving assessment |
+| `ai_insights.next_likely_move` | string | AI prediction |
+
+### Signal Types
+
+BounceWatch tracks various signal types across multiple categories. The `type` field in highlights indicates the signal category:
+
+<AccordionGroup>
+  <Accordion title="Funding Signals" icon="dollar-sign">
+    - `funding` - New Funding Received, Grant Received, IPO Announced
+  </Accordion>
+  
+  <Accordion title="Business & Partnerships" icon="handshake">
+    - `business` - Partnership Announced, Major Customer Win
+    - `recognition` - Accepted to Program, Award Received, Certification Achieved
+  </Accordion>
+  
+  <Accordion title="Product & Growth" icon="rocket">
+    - `product` - New Product Launched, New Feature Launched, Mobile App Launched
+    - `traction` - Growth Metrics Shared, Revenue Metrics Shared, Website/LinkedIn Traffic Changes
+  </Accordion>
+  
+  <Accordion title="Expansion" icon="globe">
+    - `expansion` - Expansion Announced, New Office Opened
+  </Accordion>
+  
+  <Accordion title="Team Changes" icon="users">
+    - `hiring` - Key Hire Announced, Team Size Increased, Open Positions
+    - `team_change` - Key Exit Announced
+    - `negative` - Layoffs Announced, Shutdown Announced
+  </Accordion>
+  
+  <Accordion title="Strategic & Regulatory" icon="scale-balanced">
+    - `milestone` - Regulatory Approval
+    - `strategy` - Pivot Announced
+    - `acquisition` - Acquisition Announced, Acquisition Made
+    - `media` - Featured on News
+  </Accordion>
+  
+  <Accordion title="Rumors & Intents" icon="comment-dots">
+    - `rumor` - Acquisition Rumor, IPO Rumor, Partnership Talks, Expansion Plan, Layoff Rumor, Leadership Change Rumor
+    - `risk` - Shutdown Risk
+  </Accordion>
+  
+  <Accordion title="Events" icon="calendar">
+    - `event` - Event Participation
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Competitors Enrichment (+8 credits)
+
+<ParamField query="enrich" type="string">
+  Add `competitors` to the enrich parameter: `?enrich=competitors`
+</ParamField>
+
+```json
+{
+  "data": {
+    "competitors": {
+      "competitors_count": 12,
+      "similar_companies": [
+        {
+          "name": "Adyen",
+          "domain": "adyen.com",
+          "slogan": "The payments platform built for growth",
+          "industries": ["FinTech", "Payments"],
+          "country": "Netherlands",
+          "funding_stage": "Public",
+          "total_funding": 266000000,
+          "employee_count": 3500,
+          "employee_range": "1001-5000"
+        },
+        {
+          "name": "Square",
+          "domain": "squareup.com",
+          "slogan": "Start selling today",
+          "industries": ["FinTech", "Payments", "Point of Sale"],
+          "country": "United States",
+          "funding_stage": "Public",
+          "total_funding": 590000000,
+          "employee_count": 8000,
+          "employee_range": "5001-10000"
+        },
+        {
+          "name": "Braintree",
+          "domain": "braintreepayments.com",
+          "slogan": "A PayPal service",
+          "industries": ["FinTech", "Payments"],
+          "country": "United States",
+          "funding_stage": "Acquired",
+          "total_funding": 69000000,
+          "employee_count": null,
+          "employee_range": "201-500"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Competitors Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `competitors_count` | integer | Number of similar companies |
+| `similar_companies` | array | List of similar companies |
+| `similar_companies[].name` | string | Company name |
+| `similar_companies[].domain` | string | Company domain |
+| `similar_companies[].slogan` | string | Company tagline |
+| `similar_companies[].industries` | array | Industry classifications |
+| `similar_companies[].country` | string | HQ country |
+| `similar_companies[].funding_stage` | string | Current funding stage |
+| `similar_companies[].total_funding` | integer | Total funding in USD |
+| `similar_companies[].employee_count` | integer | Exact employee count |
+| `similar_companies[].employee_range` | string | Employee range bucket |
+
+---
+
+## Full Response Example
+
+Here's a complete example with all modules enabled:
+
+```bash
+GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,competitors
+```
+
+<Accordion title="View Full Response (60 credits)" icon="code">
+```json
+{
+  "success": true,
+  "mode": "cached",
+  "data": {
+    "company": {
+      "name": "Stripe",
+      "description": "Financial infrastructure platform for the internet",
+      "founded_year": 2010,
+      "company_status": "active",
+      "phone": "+1-888-926-2289",
+      "email": "support@stripe.com",
+      "domain": "stripe.com",
+      "linkedin_url": "https://www.linkedin.com/company/stripe",
+      "facebook_url": "https://www.facebook.com/stripe",
+      "twitter_url": "https://twitter.com/stripe",
+      "headquarter_country": "United States",
+      "headquarter_city": "San Francisco",
+      "registered_address": null,
+      "office_locations": ["London", "Dublin", "Singapore", "Tokyo"],
+      "employee_count": 8000,
+      "employee_range": "5001-10000",
+      "legal_name": null,
+      "company_number": null,
+      "company_type": null,
+      "date_of_creation": null,
+      "jurisdiction": null,
+      "sic_codes": []
+    },
+    "business": {
+      "industries_count": 3,
+      "industries": ["Financial Services", "FinTech", "Payments"],
+      "business_model": ["B2B", "SaaS", "Platform"],
+      "revenue_model": ["Transaction Fees", "Subscription"],
+      "target_audience": "Developers and businesses",
+      "services_count": 4,
+      "services": [...],
+      "certificates_count": 2,
+      "certificates_and_compliance": [...],
+      "taxonomy_count": 5,
+      "taxonomy": [...],
+      "market_problems_count": 2,
+      "market_problems": [...],
+      "target_countries_count": 3,
+      "target_countries": [...],
+      "potential_target_countries_count": 2,
+      "potential_target_countries": [...]
+    },
+    "technology": {
+      "total_technologies": 47,
+      "categories_count": 12,
+      "technologies": [...],
+      "technology_stack": {...},
+      "last_updated": "2025-12-15T10:30:00Z"
+    },
+    "funding": {
+      "total_funding": 8700000000,
+      "funding_stage": "Series I",
+      "last_funding_date": "2023-03-15",
+      "funding_round_count": 12,
+      "last_valuation": 50000000000,
+      "investment_history": [...],
+      "investors_count": 42,
+      "investors": [...],
+      "notable_investors_count": 5,
+      "notable_investors": [...],
+      "lead_investors": [],
+      "acquisitions": []
+    },
+    "team": {
+      "team_count": 8,
+      "team_members": [...],
+      "monthly_growth": {...},
+      "three_month_growth": {...},
+      "six_month_growth": {...},
+      "historical_employee_data": [...],
+      "job_listings_count": 145,
+      "job_titles_count": 89,
+      "job_titles": [...],
+      "job_locations_count": 12,
+      "job_locations": [...],
+      "job_countries_count": 8,
+      "job_countries": [...],
+      "hiring_status": "actively_hiring",
+      "key_role_openings_count": 5,
+      "key_role_openings": [...]
+    },
+    "signals": {
+      "highlights_count": 12,
+      "highlights": [...],
+      "linkedin_metrics": {...},
+      "ai_insights": {...}
+    },
+    "competitors": {
+      "competitors_count": 12,
+      "similar_companies": [...]
+    }
+  },
+  "credits_used": 60,
+  "credits_breakdown": {
+    "base": 10,
+    "enrichments": {
+      "business": 6,
+      "technology": 4,
+      "funding": 10,
+      "team": 6,
+      "signals": 16,
+      "competitors": 8
+    }
+  },
+  "modules_included": ["base", "business", "technology", "funding", "team", "signals", "competitors"],
+  "from_recent_enrichment": false,
+  "from_recent_cache": false,
+  "credits_remaining": 4940
+}
+```
+</Accordion>
+
+---
+
+## Error Responses
+
+```json
+{
+  "success": false,
+  "error": "company_not_found",
+  "message": "No company found for domain: unknown-startup.xyz",
+  "credits_used": 0
+}
+```
+
+| Error | HTTP Code | Description |
+|-------|-----------|-------------|
+| `company_not_found` | 404 | Domain not in database |
+| `invalid_api_key` | 401 | API key is invalid or missing |
+| `insufficient_credits` | 402 | Not enough credits |
+| `rate_limit_exceeded` | 429 | Too many requests |
+| `invalid_module` | 400 | Invalid enrichment module specified |
+
+<Card title="API Overview" icon="book" href="/api-reference/overview">
+  Learn about authentication, rate limits, and error handling →
+</Card>
