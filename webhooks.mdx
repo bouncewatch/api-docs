@@ -146,23 +146,28 @@ $data = json_decode($response, true);
   </Accordion>
   
   <Accordion title="enrichment.failed" icon="xmark">
-    Triggered when a realtime enrichment job fails.
+    Triggered when a realtime enrichment job fails or finds no data.
     
     ```json
     {
       "event": "enrichment.failed",
       "batch_id": "batch_1gVwXby8PsYHoMQR",
-      "domain": "invalid-domain.xyz",
-      "status": "failed",
-      "error": "company_not_found",
-      "message": "Could not find company data for this domain",
+      "domain": "invalid-startup-domain.xyz",
+      "status": "no_data_found",
+      "error": "no_company_data",
+      "message": "No company information could be found for this domain after enrichment scan",
       "credits": {
         "reserved": 20,
-        "used": 0,
+        "used": 20,
         "refunded": 20
-      }
+      },
+      "note": "Credits are automatically refunded when no data is found"
     }
     ```
+    
+    <Info>
+      Credits are **reserved** upfront but **automatically refunded** if enrichment fails or finds no valid company data.
+    </Info>
   </Accordion>
   
   <Accordion title="credit_low" icon="triangle-exclamation">

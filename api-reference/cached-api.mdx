@@ -12,6 +12,10 @@ The Cached API returns company data instantly from our database. This is the def
   **Response time:** Under 250ms for most requests
 </Info>
 
+<Warning>
+  **Auto-enrichment for new domains:** If a domain is not in our database, the API will automatically start realtime enrichment (202 Accepted) and charge credits. Results will be sent to your configured webhook. This ensures you always get data for valid domains.
+</Warning>
+
 ## Endpoint
 
 <ParamField path="domain" type="string" required>
@@ -305,6 +309,19 @@ GET /api/v1/company/{domain}
     | `market_position` | string | Market positioning |
   </Accordion>
 </AccordionGroup>
+
+## Automatic Realtime Enrichment for New Domains
+
+<Warning>
+  **Important:** If a domain is not found in our database, the API will **automatically trigger realtime enrichment** instead of returning a 404 error.
+  
+  - Credits will be charged (base + requested modules)
+  - You'll receive a `202 Accepted` response with a `batch_id`
+  - Results will be sent to your webhook when ready (typically 3-7 minutes)
+  - Requires webhook URL to be configured
+</Warning>
+
+This ensures you always get data for valid domains without needing to make a separate realtime request.
 
 ## When to Use Cached API
 

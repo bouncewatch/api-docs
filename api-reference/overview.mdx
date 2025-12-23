@@ -95,8 +95,12 @@ All responses are returned in JSON format with a consistent structure:
   <Accordion title="Resource Errors" icon="magnifying-glass">
     | Error Code | Message | Solution |
     |------------|---------|----------|
-    | `company_not_found` | No company found for domain | Verify the domain exists |
     | `data_unavailable` | Requested data not available | Try a different module |
+    | `webhook_required` | Webhook URL required for new domain | Configure webhook or use X-Webhook-URL header |
+    
+    <Info>
+      **Note:** `company_not_found` no longer returns as an error. Instead, the API automatically triggers realtime enrichment (202 Accepted) for domains not in our database.
+    </Info>
   </Accordion>
   
   <Accordion title="Limit Errors" icon="gauge">
@@ -110,6 +114,10 @@ All responses are returned in JSON format with a consistent structure:
 
 ## Error Handling Example
 
+<Info>
+  **Note:** When a domain is not found in cached mode, the API returns `202 Accepted` and starts realtime enrichment instead of returning an error. Handle this case by checking for `status === 202` and the `batch_id` in the response.
+</Info>
+
 <CodeGroup>
 ```javascript JavaScript
 async function getCompanyData(domain) {
@@ -121,16 +129,23 @@ async function getCompanyData(domain) {
     
     const data = await response.json();
     
+    // Handle realtime enrichment (202 Accepted - domain not in cache)
+    if (response.status === 202) {
+      console.log(`Domain ${domain} not in cache. Enrichment started.`);
+      console.log(`Batch ID: ${data.batch_id}. Results will be sent to webhook.`);
+      return { status: 'enriching', batch_id: data.batch_id };
+    }
+    
     if (!data.success) {
       switch (data.error) {
-        case 'company_not_found':
-          console.log(`Company ${domain} not found`);
-          break;
         case 'insufficient_credits':
-          console.log(`Need ${data.credits_required} credits, have ${data.credits_available}`);
+          console.log(`Need ${data.credits_needed} credits, have ${data.credits_available}`);
           break;
         case 'rate_limit_exceeded':
           console.log(`Rate limited. Retry after ${data.retry_after}s`);
+          break;
+        case 'webhook_required':
+          console.log(`Webhook URL required for new domain enrichment`);
           break;
         default:
           console.log(`Error: ${data.message}`);
@@ -157,14 +172,20 @@ def get_company_data(domain):
         )
         data = response.json()
         
+        # Handle realtime enrichment (202 Accepted - domain not in cache)
+        if response.status_code == 202:
+            print(f"Domain {domain} not in cache. Enrichment started.")
+            print(f"Batch ID: {data['batch_id']}. Results will be sent to webhook.")
+            return {'status': 'enriching', 'batch_id': data['batch_id']}
+        
         if not data['success']:
             error = data.get('error')
-            if error == 'company_not_found':
-                print(f"Company {domain} not found")
-            elif error == 'insufficient_credits':
-                print(f"Need {data['credits_required']} credits")
+            if error == 'insufficient_credits':
+                print(f"Need {data['credits_needed']} credits")
             elif error == 'rate_limit_exceeded':
                 print(f"Rate limited. Retry after {data['retry_after']}s")
+            elif error == 'webhook_required':
+                print(f"Webhook URL required for new domain enrichment")
             else:
                 print(f"Error: {data['message']}")
             return None
@@ -192,16 +213,23 @@ function getCompanyData($domain) {
     
     $data = json_decode($response, true);
     
+    // Handle realtime enrichment (202 Accepted - domain not in cache)
+    if ($httpCode === 202) {
+        echo "Domain {$domain} not in cache. Enrichment started.\n";
+        echo "Batch ID: {$data['batch_id']}. Results will be sent to webhook.\n";
+        return ['status' => 'enriching', 'batch_id' => $data['batch_id']];
+    }
+    
     if (!$data['success']) {
         switch ($data['error']) {
-            case 'company_not_found':
-                echo "Company {$domain} not found\n";
-                break;
             case 'insufficient_credits':
-                echo "Need {$data['credits_required']} credits\n";
+                echo "Need {$data['credits_needed']} credits\n";
                 break;
             case 'rate_limit_exceeded':
                 echo "Rate limited. Retry after {$data['retry_after']}s\n";
+                break;
+            case 'webhook_required':
+                echo "Webhook URL required for new domain enrichment\n";
                 break;
             default:
                 echo "Error: {$data['message']}\n";

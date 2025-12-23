@@ -1000,22 +1000,27 @@ GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,c
 
 ## Error Responses
 
+<Info>
+  **Note:** If a domain is not found in cached mode, the API now **automatically triggers realtime enrichment** (202 Accepted) instead of returning a 404 error. The examples below apply to other error scenarios.
+</Info>
+
 ```json
 {
   "success": false,
-  "error": "company_not_found",
-  "message": "No company found for domain: unknown-startup.xyz",
-  "credits_used": 0
+  "error": "insufficient_credits",
+  "message": "Not enough credits for this request",
+  "credits_needed": 20,
+  "credits_available": 5
 }
 ```
 
 | Error | HTTP Code | Description |
 |-------|-----------|-------------|
-| `company_not_found` | 404 | Domain not in database |
-| `invalid_api_key` | 401 | API key is invalid or missing |
 | `insufficient_credits` | 402 | Not enough credits |
+| `invalid_api_key` | 401 | API key is invalid or missing |
 | `rate_limit_exceeded` | 429 | Too many requests |
 | `invalid_module` | 400 | Invalid enrichment module specified |
+| `webhook_required` | 400 | Webhook URL required for new domain enrichment |
 
 <Card title="API Overview" icon="book" href="/api-reference/overview">
   Learn about authentication, rate limits, and error handling →
