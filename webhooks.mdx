@@ -216,9 +216,10 @@ All webhook requests include security headers for verification:
 
 | Header | Description |
 |--------|-------------|
-| `X-BW-Signature` | HMAC-SHA256 signature of the payload |
-| `X-BW-Timestamp` | Unix timestamp when the webhook was sent |
-| `X-BW-Webhook-ID` | Unique ID for this webhook delivery |
+| `X-BounceWatch-Signature` | HMAC-SHA256 signature of the payload |
+| `X-BounceWatch-Timestamp` | Unix timestamp when the webhook was sent |
+| `X-BounceWatch-Event` | Event type (e.g., enrichment.completed) |
+| `X-BounceWatch-Batch-ID` | Unique ID for this webhook delivery |
 
 ### Verifying Signatures (Optional)
 
@@ -256,8 +257,8 @@ Always verify webhook signatures to ensure requests are from BounceWatch.
 
     // Express.js handler
     app.post('/webhooks/bouncewatch', express.raw({ type: 'application/json' }), (req, res) => {
-      const signature = req.headers['x-bw-signature'];
-      const timestamp = req.headers['x-bw-timestamp'];
+      const signature = req.headers['x-bouncewatch-signature'];
+      const timestamp = req.headers['x-bouncewatch-timestamp'];
       const payload = req.body.toString();
       
       try {
@@ -307,8 +308,8 @@ Always verify webhook signatures to ensure requests are from BounceWatch.
 
     @app.route('/webhooks/bouncewatch', methods=['POST'])
     def webhook_handler():
-        signature = request.headers.get('X-BW-Signature')
-        timestamp = request.headers.get('X-BW-Timestamp')
+        signature = request.headers.get('X-BounceWatch-Signature')
+        timestamp = request.headers.get('X-BounceWatch-Timestamp')
         payload = request.get_data(as_text=True)
         
         try:
@@ -351,8 +352,8 @@ Always verify webhook signatures to ensure requests are from BounceWatch.
     
     // Get webhook data
     $payload = file_get_contents('php://input');
-    $signature = $_SERVER['HTTP_X_BW_SIGNATURE'] ?? '';
-    $timestamp = $_SERVER['HTTP_X_BW_TIMESTAMP'] ?? '';
+    $signature = $_SERVER['HTTP_X_BOUNCEWATCH_SIGNATURE'] ?? '';
+    $timestamp = $_SERVER['HTTP_X_BOUNCEWATCH_TIMESTAMP'] ?? '';
     
     try {
         verifyWebhook($payload, $signature, $timestamp, $webhookSecret);
