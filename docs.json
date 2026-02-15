@@ -31,8 +31,8 @@
         "pages": [
           "api-reference/overview",
           "api-reference/response-schema",
-          "api-reference/cached-api",
-          "api-reference/realtime-api",
+          "api-reference/company-api",
+          "api-reference/enrichment-tracking",
           "api-reference/account"
         ]
       }

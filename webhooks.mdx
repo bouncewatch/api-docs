@@ -9,7 +9,7 @@ icon: "bell"
 Webhooks allow you to receive real-time HTTP notifications when events occur in your BounceWatch account. Instead of polling the API, webhooks push data to your server automatically.
 
 <Info>
-  Webhooks are essential for [Realtime API](/api-reference/realtime-api) to receive enrichment completion notifications.
+  Webhooks are required for receiving enrichment results. Set the `X-Webhook-URL` header on your API requests or configure a default webhook in the [API Panel](https://bouncewatch.com/api-panel/webhooks).
 </Info>
 
 ## Quick Setup
@@ -140,33 +140,75 @@ $data = json_decode($response, true);
         "used": 20,
         "refunded": 0
       },
-      "data_url": "https://api.bouncewatch.com/v1/enrichment/batch_1gVwXby8PsYHoMQR/results"
+      "data_url": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/results",
+      "_meta": {
+        "api_version": "2.0",
+        "webhook_attempt": 1
+      }
     }
     ```
+
+    <Warning>
+      The webhook payload does not contain enrichment data directly. Use the `data_url` with your API key to fetch the full results.
+    </Warning>
   </Accordion>
   
   <Accordion title="enrichment.failed" icon="xmark">
-    Triggered when a realtime enrichment job fails or finds no data.
+    Triggered when enrichment fails due to a system error. Credits are automatically refunded.
     
     ```json
     {
       "event": "enrichment.failed",
       "batch_id": "batch_1gVwXby8PsYHoMQR",
-      "domain": "invalid-startup-domain.xyz",
-      "status": "no_data_found",
-      "error": "no_company_data",
-      "message": "No company information could be found for this domain after enrichment scan",
+      "domain": "stripe.com",
+      "status": "failed",
+      "error": "Enrichment process timed out. Please try again.",
       "credits": {
         "reserved": 20,
-        "used": 20,
+        "used": 0,
         "refunded": 20
       },
-      "note": "Credits are automatically refunded when no data is found"
+      "_meta": {
+        "api_version": "2.0",
+        "webhook_attempt": 1
+      }
     }
     ```
     
     <Info>
-      Credits are **reserved** upfront but **automatically refunded** if enrichment fails or finds no valid company data.
+      Credits are **reserved** upfront but **automatically refunded** if enrichment fails.
+    </Info>
+  </Accordion>
+
+  <Accordion title="enrichment.no_data_found" icon="circle-question">
+    Triggered when the domain exists but no enrichment data could be found. Credits are refunded.
+    
+    ```json
+    {
+      "event": "enrichment.no_data_found",
+      "batch_id": "batch_1gVwXby8PsYHoMQR",
+      "domain": "unknown-startup.xyz",
+      "status": "no_data_found",
+      "message": "We could not find enrichment data for this domain. This could mean the company has limited online presence, the domain is new, or it may not be a valid business domain.",
+      "suggestions": [
+        "Verify the domain is correct and belongs to an active business",
+        "Try again later as our data sources update regularly",
+        "Contact support if you believe this is an error"
+      ],
+      "credits": {
+        "reserved": 20,
+        "used": 0,
+        "refunded": 20
+      },
+      "_meta": {
+        "api_version": "2.0",
+        "webhook_attempt": 1
+      }
+    }
+    ```
+    
+    <Info>
+      Credits are **automatically refunded** when no data is found for a domain.
     </Info>
   </Accordion>
   

@@ -64,12 +64,13 @@ All responses are returned in JSON format with a consistent structure:
 
 | Code | Status | Description |
 |------|--------|-------------|
-| `200` | OK | Request successful |
-| `400` | Bad Request | Invalid parameters or malformed request |
+| `200` | OK | Request successful (data served from 24h cache) |
+| `202` | Accepted | Enrichment queued (results via webhook) |
+| `400` | Bad Request | Invalid parameters or missing webhook URL |
 | `401` | Unauthorized | Invalid or missing API key |
 | `402` | Payment Required | Insufficient credits |
-| `404` | Not Found | Company not found |
-| `429` | Too Many Requests | Rate limit exceeded |
+| `410` | Gone | Deprecated endpoint or mode |
+| `429` | Too Many Requests | Rate limit or cooldown exceeded |
 | `500` | Internal Server Error | Server error - please retry |
 
 ## Error Codes
@@ -115,7 +116,7 @@ All responses are returned in JSON format with a consistent structure:
 ## Error Handling Example
 
 <Info>
-  **Note:** When a domain is not found in cached mode, the API returns `202 Accepted` and starts realtime enrichment instead of returning an error. Handle this case by checking for `status === 202` and the `batch_id` in the response.
+  **Note:** When a domain requires enrichment, the API returns `202 Accepted` and starts enrichment automatically. Handle this by checking for `status === 202` and the `batch_id` in the response. Results will be delivered to your webhook.
 </Info>
 
 <CodeGroup>

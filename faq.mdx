@@ -14,24 +14,25 @@ icon: "circle-question"
     4. Copy it and add to your requests as `X-API-Key` header
   </Accordion>
 
-  <Accordion title="What's the difference between Cached and Realtime mode?" icon="shuffle">
-    **Cached Mode (Default):**
-    - Instant response (< 250ms)
-    - Returns data from our database
-    - Best for high-volume requests and dashboards
+  <Accordion title="How does the enrichment process work?" icon="wand-magic-sparkles">
+    The API now operates in a **single unified mode** — no need to choose between cached and realtime.
     
-    **Realtime Mode:**
-    - Fresh data collected on-demand
-    - Takes 2-10 minutes to complete
-    - Results sent via webhook
-    - Best for due diligence and critical decisions
+    **How it works:**
+    - Send a request to `GET /api/v1/company/stripe.com`
+    - If data was enriched within the last 24 hours → **instant response** (< 250ms, no charge)
+    - If no recent data → **enrichment triggers automatically** (202 Accepted)
+    - Results are delivered to your webhook (2-10 minutes)
+    - Subsequent requests within 24h get the data instantly for free
+    
+    **Webhook is required** for new enrichments. Configure it in your [API Panel](https://bouncewatch.com/api-panel/webhooks) or use the `X-Webhook-URL` header.
+    
+    <Tip>
+      For quick testing, get a free webhook URL from [webhook.site](https://webhook.site)
+    </Tip>
     
     ```bash
-    # Cached (default)
-    GET /api/v1/company/stripe.com
-    
-    # Realtime
-    GET /api/v1/company/stripe.com?mode=realtime
+    # Simple request - API handles everything
+    GET /api/v1/company/stripe.com?enrich=funding,team
     ```
   </Accordion>
 
@@ -112,7 +113,7 @@ icon: "circle-question"
     | Technology | 2-4 weeks |
     | Signals | Real-time |
     
-    Use **Realtime mode** when you need the absolute freshest data.
+    Use **the enrich parameter** when you need specific data modules for a domain.
   </Accordion>
 </AccordionGroup>
 

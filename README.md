@@ -23,9 +23,9 @@ BounceWatch API provides detailed information about companies with a single API 
 ## Key Features
 
 - **Modular Architecture** - Only fetch the data you need with 7 different enrichment modules
-- **Two Modes** - Instant response with Cached mode, fresh data with Realtime mode
+- **Smart Enrichment** - Automatic 24h dedup: first request triggers enrichment, repeat requests return instant data for free
 - **Credit-Based** - Pay for what you use with a transparent credit system
-- **Webhook Support** - Get notified instantly when realtime enrichment completes
+- **Webhook Delivery** - Receive enrichment results via webhook as soon as they're ready
 
 ## Quick Start
 

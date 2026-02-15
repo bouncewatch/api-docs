@@ -9,38 +9,148 @@ icon: "sitemap"
 This page documents the complete response structure for all BounceWatch API endpoints. Use this as a reference to understand exactly what data you'll receive.
 
 <Info>
-  All responses include a `success` boolean and follow a consistent structure. Data is returned in the `data` object.
+  All responses include a `success` boolean and follow a consistent structure. The API uses a **unified smart enrichment model** — there is no separate cached vs realtime mode.
 </Info>
 
-## Response Wrapper
+## API Flow
 
-Every API response follows this structure:
+<Steps>
+  <Step title="Request a domain">
+    ```bash
+    GET /api/v1/company/stripe.com?enrich=business,funding
+    ```
+    Include your API key via `X-API-Key` header and a webhook URL via `X-Webhook-URL` header (or configure one in your API panel).
+  </Step>
+  <Step title="First request → 202 Accepted">
+    New domain or data older than 24 hours: enrichment is queued. You receive a `batch_id` and tracking endpoints immediately.
+  </Step>
+  <Step title="Webhook delivers results">
+    When enrichment completes (typically 2–10 min), we POST the results to your webhook URL with a `data_url` to fetch the full data.
+  </Step>
+  <Step title="Same domain within 24h → 200 OK">
+    If you request the same domain again within 24 hours, cached data is returned **instantly at no additional cost** (0 credits).
+  </Step>
+</Steps>
+
+---
+
+## Response Structures
+
+The API returns two different response structures depending on whether the domain needs fresh enrichment or has recent data available.
+
+<Tabs>
+  <Tab title="202 — Enrichment Queued">
+    Returned when a new enrichment is triggered. Results will be delivered via webhook.
+
+    ```json
+    {
+      "success": true,
+      "status": "processing",
+      "batch_id": "batch_abc123xyz",
+      "current_data": {
+        "company": { ... }
+      },
+      "enrichment_status": "processing",
+      "modules_requested": ["business", "funding"],
+      "modules_count": 2,
+      "webhook_notification": "enabled",
+      "status_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/status",
+      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results",
+      "credits_reserved": 26,
+      "message": "Enrichment jobs queued successfully. Fresh data will be sent to your webhook when ready.",
+      "hint": "Results will be delivered to your webhook URL. You can also poll the status_endpoint to check progress."
+    }
+    ```
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `batch_id` | string | Unique identifier for tracking this enrichment |
+    | `current_data` | object | Any existing (possibly stale) data for the domain |
+    | `enrichment_status` | string | Always `processing` for new enrichments |
+    | `webhook_notification` | string | `enabled` — confirms webhook delivery is configured |
+    | `status_endpoint` | string | Poll this URL to check enrichment progress |
+    | `results_endpoint` | string | Fetch completed results from this URL |
+    | `credits_reserved` | integer | Credits reserved upfront (refunded if enrichment fails) |
+  </Tab>
+
+  <Tab title="200 — Cached Data (Free)">
+    Returned when the same domain was enriched within the last 24 hours. **No credits charged.**
+
+    ```json
+    {
+      "success": true,
+      "data": {
+        "company": { ... },
+        "business": { ... },
+        "funding": { ... }
+      },
+      "credits_used": 0,
+      "credits_breakdown": {
+        "base": 0,
+        "enrichments": { "business": 0, "funding": 0 },
+        "note": "No credits charged — 24-hour deduplication. Normal cost would be 26 credits."
+      },
+      "modules_included": ["base", "business", "funding"],
+      "from_recent_enrichment": true,
+      "credits_remaining": 4974,
+      "dedup_note": "This domain was enriched within the last 24 hours. Cached data is returned at no charge."
+    }
+    ```
+
+    | Field | Type | Description |
+    |-------|------|-------------|
+    | `data` | object | Complete enrichment data, nested by module |
+    | `credits_used` | integer | Always `0` for deduplicated responses |
+    | `credits_breakdown` | object | Shows all zeros with a `note` explaining normal cost |
+    | `modules_included` | array | List of modules in the response |
+    | `from_recent_enrichment` | boolean | `true` if data comes from a recent enrichment batch |
+    | `credits_remaining` | integer | Your current credit balance |
+    | `dedup_note` | string | Explains why no credits were charged |
+  </Tab>
+</Tabs>
+
+<Info>
+  **Deprecation notice:** If you pass `mode=realtime`, the request will still work but the response will include a `deprecation_notice` field. The `mode=cached` parameter returns **410 Gone**. Remove the `mode` parameter entirely — it is no longer needed.
+</Info>
+
+---
+
+## Webhook Payload
+
+When enrichment completes, this payload is POSTed to your webhook URL:
 
 ```json
 {
-  "success": true,
-  "mode": "cached",
-  "data": {
-    // Module data here
+  "event": "enrichment.completed",
+  "batch_id": "batch_abc123xyz",
+  "domain": "stripe.com",
+  "status": "completed",
+  "requested_modules": ["business", "funding"],
+  "requested_at": "2025-01-15T10:25:00Z",
+  "completed_at": "2025-01-15T10:30:00Z",
+  "duration_seconds": 300,
+  "credits": {
+    "reserved": 26,
+    "used": 26,
+    "refunded": 0
   },
-  "credits_used": 26,
-  "credits_breakdown": {
-    "base": 10,
-    "enrichments": {
-      "funding": 10,
-      "team": 6
-    }
-  },
-  "modules_included": ["base", "funding", "team"],
-  "from_recent_enrichment": false,
-  "from_recent_cache": false,
-  "credits_remaining": 4974
+  "data_url": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results",
+  "_meta": {
+    "api_version": "2.0",
+    "webhook_attempt": 1
+  }
 }
 ```
 
-<Info>
-  If `from_recent_enrichment` or `from_recent_cache` is `true`, you're receiving cached data from a request made within the last 24 hours - no additional credits are charged.
-</Info>
+| Event | Description |
+|-------|-------------|
+| `enrichment.completed` | Data is ready — fetch it from `data_url` |
+| `enrichment.failed` | Enrichment failed — credits are refunded |
+| `enrichment.no_data_found` | Domain exists but no enrichment data found — credits refunded |
+
+<Warning>
+  Use `data_url` to fetch the full enrichment results with your API key. The webhook payload itself does not contain the enrichment data — only metadata and the URL to retrieve it.
+</Warning>
 
 ---
 
@@ -881,7 +991,6 @@ GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,c
 ```json
 {
   "success": true,
-  "mode": "cached",
   "data": {
     "company": {
       "name": "Stripe",
@@ -990,38 +1099,96 @@ GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,c
   },
   "modules_included": ["base", "business", "technology", "funding", "team", "signals", "competitors"],
   "from_recent_enrichment": false,
-  "from_recent_cache": false,
   "credits_remaining": 4940
 }
 ```
 </Accordion>
+
+<Note>
+  The example above shows a **first-time enrichment result** fetched from the `results_endpoint` after webhook delivery. For **deduplicated responses** (same domain within 24h), `credits_used` will be `0` and the `credits_breakdown` will show all zeros with a `note` field.
+</Note>
 
 ---
 
 ## Error Responses
 
 <Info>
-  **Note:** If a domain is not found in cached mode, the API now **automatically triggers realtime enrichment** (202 Accepted) instead of returning a 404 error. The examples below apply to other error scenarios.
+  All error responses include `"success": false` and a human-readable `message`. Most also include `hint` or `suggestions` to help you resolve the issue.
 </Info>
 
-```json
-{
-  "success": false,
-  "error": "insufficient_credits",
-  "message": "Not enough credits for this request",
-  "credits_needed": 20,
-  "credits_available": 5
-}
-```
+<Tabs>
+  <Tab title="400 — Bad Request">
+    ```json
+    {
+      "success": false,
+      "message": "Webhook URL is required for enrichment requests",
+      "hint": "Configure a webhook URL in your API panel or provide it via X-Webhook-URL header.",
+      "quick_test": "For quick testing, get a free webhook URL from https://webhook.site",
+      "documentation": "https://docs.bouncewatch.com/webhooks"
+    }
+    ```
+  </Tab>
+  <Tab title="402 — Insufficient Credits">
+    ```json
+    {
+      "success": false,
+      "message": "Insufficient credits",
+      "credits_needed": 26,
+      "credits_available": 5
+    }
+    ```
+  </Tab>
+  <Tab title="409 — Conflict / Cooldown">
+    ```json
+    {
+      "success": false,
+      "message": "This domain was recently enriched. Cached data is available at no charge via the main endpoint.",
+      "hint": "Request GET /api/v1/company/stripe.com again to receive cached data instantly for free.",
+      "cooldown_expires_at": "2025-01-16T10:30:00Z",
+      "hours_remaining": 18.5,
+      "previous_batch_id": "batch_abc123xyz",
+      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results"
+    }
+    ```
+    <Note>Includes a `Retry-After` header with seconds until the cooldown expires.</Note>
+  </Tab>
+  <Tab title="410 — Gone (Deprecated)">
+    ```json
+    {
+      "success": false,
+      "message": "The cached mode has been deprecated and removed.",
+      "migration_guide": {
+        "change": "Remove the mode=cached parameter from your requests.",
+        "how_it_works": "All requests now trigger realtime enrichment automatically. If the same domain was enriched within the last 24 hours, you will receive cached data instantly at no additional cost.",
+        "webhook_required": "A webhook URL is required for new enrichments.",
+        "example_request": "GET /api/v1/company/stripe.com?enrich=funding,team"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="429 — Rate Limited">
+    ```json
+    {
+      "success": false,
+      "message": "Rate limit exceeded",
+      "retry_after": 60
+    }
+    ```
+    <Note>This is for actual rate limiting only — domain cooldowns use 409.</Note>
+  </Tab>
+</Tabs>
 
-| Error | HTTP Code | Description |
-|-------|-----------|-------------|
-| `insufficient_credits` | 402 | Not enough credits |
-| `invalid_api_key` | 401 | API key is invalid or missing |
-| `rate_limit_exceeded` | 429 | Too many requests |
-| `invalid_module` | 400 | Invalid enrichment module specified |
-| `webhook_required` | 400 | Webhook URL required for new domain enrichment |
+### Error Code Reference
+
+| HTTP Code | When | Description |
+|-----------|------|-------------|
+| **400** | Invalid request | Missing webhook URL, invalid domain, invalid modules |
+| **401** | Auth failure | API key is invalid, missing, or disabled |
+| **402** | No credits | Insufficient credits for the requested modules |
+| **409** | Conflict | Enrichment already in progress, or domain in 24h cooldown |
+| **410** | Deprecated | `mode=cached` parameter used — removed from API |
+| **429** | Rate limited | Too many requests per minute (check your plan limits) |
 
 <Card title="API Overview" icon="book" href="/api-reference/overview">
-  Learn about authentication, rate limits, and error handling →
+  Learn about authentication, rate limits, and API key management →
 </Card>

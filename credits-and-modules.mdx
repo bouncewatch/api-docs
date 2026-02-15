@@ -229,7 +229,7 @@ response = requests.get(
     'https://api.bouncewatch.com/api/v1/account/credits',
     headers={'X-API-Key': 'YOUR_API_KEY'}
 )
-print(f"Credits remaining: {response.json()['data']['credits_remaining']}")
+print(f"Credits remaining: {response.json()['data']['credits']['balance']}")
 ```
 
 ```php PHP
@@ -238,7 +238,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
 $response = curl_exec($ch);
 $data = json_decode($response, true);
-echo "Credits remaining: " . $data['data']['credits_remaining'];
+echo "Credits remaining: " . $data['data']['credits']['balance'];
 ```
 </CodeGroup>
 
@@ -246,11 +246,12 @@ echo "Credits remaining: " . $data['data']['credits_remaining'];
 {
   "success": true,
   "data": {
-    "credits_remaining": 5420,
-    "credits_total": 10000,
-    "credits_used": 4580,
-    "reset_date": "2025-02-01T00:00:00Z",
-    "plan_limit": 10000
+    "credits": {
+      "balance": 5420,
+      "used": 4580,
+      "total_purchased": 10000,
+      "percentage_used": 45.8
+    }
   }
 }
 ```
@@ -279,9 +280,8 @@ If you don't have enough credits for a request:
 ```json
 {
   "success": false,
-  "error": "insufficient_credits",
-  "message": "Request requires 28 credits, you have 15 remaining",
-  "credits_required": 28,
+  "message": "Insufficient credits",
+  "credits_needed": 28,
   "credits_available": 15
 }
 ```
