@@ -1139,6 +1139,9 @@ GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,c
     ```
   </Tab>
   <Tab title="409 — Conflict / Cooldown">
+    There are three 409 scenarios:
+
+    **1. Domain in 24h cooldown** — domain was recently enriched:
     ```json
     {
       "success": false,
@@ -1150,7 +1153,28 @@ GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,c
       "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results"
     }
     ```
-    <Note>Includes a `Retry-After` header with seconds until the cooldown expires.</Note>
+
+    **2. Enrichment already in progress** — your batch is running:
+    ```json
+    {
+      "success": false,
+      "message": "An enrichment is already in progress for this domain",
+      "batch_id": "batch_abc123xyz",
+      "status_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/status",
+      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results",
+      "hint": "Please wait for the current enrichment to complete. Results will be delivered via webhook."
+    }
+    ```
+
+    **3. Enrichment already in progress** — another user's batch is running:
+    ```json
+    {
+      "success": false,
+      "message": "An enrichment is already in progress for this domain",
+      "hint": "Please wait for the current enrichment to complete and try again shortly."
+    }
+    ```
+    <Note>Scenario 1 includes a `Retry-After` header with seconds until the cooldown expires. Scenarios 2-3 indicate a running enrichment — wait for it to finish or poll the status endpoint (if provided).</Note>
   </Tab>
   <Tab title="410 — Gone (Deprecated)">
     ```json
@@ -1185,7 +1209,7 @@ GET /api/v1/company/stripe.com?enrich=business,technology,funding,team,signals,c
 | **400** | Invalid request | Missing webhook URL, invalid domain, invalid modules |
 | **401** | Auth failure | API key is invalid, missing, or disabled |
 | **402** | No credits | Insufficient credits for the requested modules |
-| **409** | Conflict | Enrichment already in progress, or domain in 24h cooldown |
+| **409** | Conflict | Enrichment already in progress, domain in 24h cooldown, or no-data cooldown |
 | **410** | Deprecated | `mode=cached` parameter used — removed from API |
 | **429** | Rate limited | Too many requests per minute (check your plan limits) |
 
