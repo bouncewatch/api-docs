@@ -1,0 +1,116 @@
+---
+title: "Tools and prompts"
+description: "The seven MCP tools, what they cost, and the ready-made workflows"
+icon: "wrench"
+---
+
+## Tools
+
+Every tool description ends with its own price, generated from config, so the model can see
+the meter running and pace itself instead of looping blind.
+
+| Tool | Credits | What it answers |
+|---|---:|---|
+| `search_signals` | 12 | Which companies did X recently — the timing question. Supports signal stacking for "raised **and** hiring". |
+| `search_companies` | 5 | Which of the companies we observe fit these firmographics. 25 with `include_unindexed`, which reaches a live external index. |
+| `get_company` | 10 + modules | Firmographic profile of one company. |
+| `get_company_signals` | 8 | Dated signal timeline for one company. |
+| `refresh_company` | 10 + modules | Queues a live scan and returns a batch id. Also how a domain we have never seen gets indexed. |
+| `get_refresh_status` | **free** | Polls a running scan. Free by design — the async model only works if waiting is free. |
+| `get_signal_taxonomy` | **free** | The signal vocabulary. Call it once per session before filtering. |
+
+<Info>
+  Module prices come from the same table as the REST API, so the same data costs the same
+  whichever door you come through. See [Credits and Modules](/credits-and-modules).
+  **Failed calls are never billed.**
+</Info>
+
+### search_signals
+
+The cross-company question: *who did something worth reacting to, and when.*
+
+| Parameter | Type | Notes |
+|---|---|---|
+| `signal_keys` | string[] | Specific signal types. Unrecognised keys are rejected with the valid list. |
+| `categories` | string[] | Broader groupings instead of individual keys. |
+| `require_all_keys` | boolean | Signal stacking — every listed signal must be present, not just one. |
+| `days` | integer | Lookback window, up to 365. |
+| `country` | string | ISO country code. |
+| `min_employees` / `max_employees` | integer | Headcount bounds. |
+| `funding_stage` | string | Matched loosely: `series-a`, `Series A` and `SERIES_A` all land on the same stage. An unknown value is rejected with the valid list. |
+| `sort` | string | Result ordering. |
+| `limit` | integer | Default 25, max 100. |
+
+The response also reports **how many companies produced signals in the window at all**, so a
+ranked list of 25 is not mistaken for the whole market.
+
+<Tip>
+  `require_all_keys` is the one worth knowing about. "Raised a round" is a weak buying signal
+  on its own; "raised a round **and** is hiring sales roles" is a much smaller, much warmer list.
+</Tip>
+
+### search_companies
+
+Firmographic search over the index: `country`, `min_employees`, `max_employees`,
+`funding_stage`, `keyword`, `employee_range`, `observed_within_days`, `limit`.
+
+Set `include_unindexed: true` to reach a live external index for companies we have not seen
+yet. That path costs **25 credits** rather than 5, because it spends real money per result.
+
+### get_company / get_company_signals
+
+`get_company` takes a `domain` and an optional `include` list of enrichment modules.
+`get_company_signals` takes a `domain` plus `days`, `categories`, `signal_keys` and `limit`,
+and returns the dated timeline — the raw material for a "why now" argument.
+
+### refresh_company / get_refresh_status
+
+`refresh_company` takes a `domain` and optional `modules`, queues a scan and hands back a
+`batch_id`. `get_refresh_status` polls that id for free until the scan lands.
+
+Guardrails, because an agent loop can dispatch scans far faster than a person would: a daily
+cap per key, per-plan concurrency, a 24-hour cooldown on the same domain, and a global
+in-flight lock so two keys cannot scan the same domain at once.
+
+## Prompts
+
+The server also exposes MCP **prompts** — ready-made workflows that clients surface as a menu
+or slash command. Rendering one is free; the tools it triggers are billed normally.
+
+| Prompt | Arguments | Job |
+|---|---|---|
+| `pre_round_radar` | `country`, `max_employees` | Companies showing momentum that have **not** raised recently — the ones likely raising soon. Deal sourcing. |
+| `why_now` | `domain` *(required)*, `offering` | An outreach angle for one account: what changed, why it matters, what to open with. |
+| `funded_and_hiring` | `country`, `days` | Closed a round **and** hiring in the same window — new budget plus a mandate to spend it. |
+| `account_watch_brief` | `domains` *(required)*, `days` | What happened across a named list of accounts, ranked by what deserves attention. |
+| `risk_scan` | `domains` *(required)* | Layoffs, shutdowns, leadership exits and other distress indicators. |
+
+<Info>
+  The real value is not the phrasing. Each template has the correct tool sequence and the
+  freshness caveats baked in — *check coverage before calling a company quiet, do not report a
+  rumour as an event* — so a first-time user gets expert behaviour without knowing the rules.
+</Info>
+
+## Errors
+
+Two channels, and the difference matters:
+
+- **JSON-RPC errors** mean the *call* was malformed — unknown method, bad envelope. The client
+  sees them; usually the model does not.
+- **Tool errors** mean the call was fine but the *answer* is a failure — out of credits, unknown
+  domain, quota hit. These come back as results so the model can read them and adapt.
+
+Rejections that happen before the protocol is reached — auth, credits, rate limits — are
+rewrapped as JSON-RPC errors with an actionable sentence, rather than being handed to the agent
+as an opaque transport failure. A `429` also carries `Retry-After`.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": null,
+  "error": {
+    "code": -32603,
+    "message": "Out of credits or no active plan. Top up at https://bouncewatch.com/api-panel/billing — no further calls will succeed until then."
+  }
+}
+```

@@ -1,0 +1,217 @@
+---
+title: "Connect your client"
+description: "Set up the BounceWatch MCP server in Claude Code, Claude Desktop, Cursor, VS Code or any MCP client"
+icon: "plug"
+---
+
+<Check>
+  You need an API key. Grab it from the [MCP panel](https://bouncewatch.com/api-panel/mcp),
+  which also generates these configs with your key already filled in.
+</Check>
+
+Two values are the whole setup:
+
+| Server URL | `https://api.bouncewatch.com/api/v1/mcp` |
+|---|---|
+| **Authentication** | `Authorization: Bearer YOUR_API_KEY` |
+
+## Claude Code
+
+One command. `--scope user` makes it available in every project; drop the flag to add it
+to the current project only.
+
+```bash
+claude mcp add --transport http bouncewatch https://api.bouncewatch.com/api/v1/mcp \
+  --header "Authorization: Bearer YOUR_API_KEY" \
+  --scope user
+```
+
+Or write it into `.mcp.json` by hand:
+
+```json
+{
+  "mcpServers": {
+    "bouncewatch": {
+      "type": "http",
+      "url": "https://api.bouncewatch.com/api/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+  The `type` field is required. An entry with a `url` and no `type` is read as a local
+  command and silently skipped.
+</Warning>
+
+Verify with `claude mcp list`, then ask Claude Code a question about timing.
+
+## Claude Desktop
+
+Claude Desktop reaches remote servers through `mcp-remote`, a small local bridge that
+attaches your key to every call.
+
+Open **Settings → Developer → Edit config**, or edit the file directly:
+
+- macOS — `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows — `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "bouncewatch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://api.bouncewatch.com/api/v1/mcp",
+        "--header",
+        "Authorization:${BOUNCEWATCH_AUTH}"
+      ],
+      "env": {
+        "BOUNCEWATCH_AUTH": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Restart Claude after saving.
+
+<Warning>
+  **The "Add custom connector" dialog will not work with an API key.** It accepts OAuth
+  credentials only — there is no field for a bearer token or a custom header — and it
+  requires a paid Claude plan. Use the config above. OAuth support is on our roadmap; when
+  it ships, the one-click connector becomes an option too.
+</Warning>
+
+<Tip>
+  The key goes in `env` and the header has no space after the colon on purpose. Claude
+  Desktop mangles spaces inside `args` when it shells out to `npx`, so
+  `"Authorization: Bearer …"` written inline arrives broken. Spaces inside an environment
+  variable survive.
+</Tip>
+
+## Cursor
+
+The [MCP panel](https://bouncewatch.com/api-panel/mcp) has a one-click **Add to Cursor**
+button. Or add it to `~/.cursor/mcp.json` yourself:
+
+```json
+{
+  "mcpServers": {
+    "bouncewatch": {
+      "url": "https://api.bouncewatch.com/api/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+## VS Code
+
+One-click **Add to VS Code** from the panel, or `.vscode/mcp.json` in your workspace:
+
+```json
+{
+  "servers": {
+    "bouncewatch": {
+      "type": "http",
+      "url": "https://api.bouncewatch.com/api/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+## Anything else
+
+The server speaks plain JSON-RPC 2.0 over a single POST. Any MCP client library works, and
+so does raw HTTP:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.bouncewatch.com/api/v1/mcp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+```javascript JavaScript
+const res = await fetch('https://api.bouncewatch.com/api/v1/mcp', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+});
+const { result } = await res.json();
+```
+
+```python Python
+import requests
+
+res = requests.post(
+    'https://api.bouncewatch.com/api/v1/mcp',
+    headers={'Authorization': 'Bearer YOUR_API_KEY'},
+    json={'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'},
+)
+tools = res.json()['result']['tools']
+```
+</CodeGroup>
+
+Supported methods: `initialize`, `tools/list`, `tools/call`, `prompts/list`, `prompts/get`,
+`ping`. Notifications are accepted and answered with `202`.
+
+## Security
+
+<Warning>
+  Your key is embedded in these config files. Do not commit `mcp.json` or
+  `claude_desktop_config.json` to a shared repository. If a key is exposed, rotate it on the
+  [API Keys page](https://bouncewatch.com/api-panel/api-keys) — the old one stops working
+  immediately.
+</Warning>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="403 with an HTML body" icon="triangle-exclamation">
+    You are pointing at `bouncewatch.com` instead of `api.bouncewatch.com`. The apex sits
+    behind a bot challenge that a scriptless POST cannot pass.
+  </Accordion>
+
+  <Accordion title="401 Authentication failed" icon="key">
+    The key is missing, mistyped, or was rotated. Check it against the
+    [MCP panel](https://bouncewatch.com/api-panel/mcp) and use the **Test connection**
+    button — it round-trips the real endpoint, so it proves the whole path, not just the key.
+  </Accordion>
+
+  <Accordion title="402 Out of credits" icon="coins">
+    The balance hit zero. Top up on the [billing page](https://bouncewatch.com/api-panel/billing).
+    No call succeeds until then; the error your agent sees says exactly this.
+  </Accordion>
+
+  <Accordion title="429 Rate limit reached" icon="clock">
+    Agents make many small calls. Wait about a minute and prefer fewer, broader calls —
+    one `search_signals` over twenty `get_company` calls. Limits by plan are on the
+    [Rate Limits](/rate-limits) page.
+  </Accordion>
+
+  <Accordion title="405 on GET" icon="ban">
+    Expected. This server answers over POST only; there is no SSE stream to open. Clients
+    that probe with GET get a readable JSON-RPC error rather than a bare 405.
+  </Accordion>
+
+  <Accordion title="The client added it but lists no tools" icon="list">
+    In Claude Code and VS Code the `type` field is required — an entry with a `url` and no
+    `type` is treated as a local command and skipped. Run `claude mcp list` to confirm.
+  </Accordion>
+</AccordionGroup>

@@ -50,6 +50,19 @@ Visit our full documentation at [docs.bouncewatch.com](https://docs.bouncewatch.
 - [Authentication](https://docs.bouncewatch.com/authentication) - API key management
 - [API Reference](https://docs.bouncewatch.com/api-reference/overview) - Complete endpoint documentation
 - [Credits & Modules](https://docs.bouncewatch.com/credits-and-modules) - Pricing and module details
+- [MCP Server](https://docs.bouncewatch.com/mcp/overview) - The same data as a tool for AI agents, over the Model Context Protocol
+
+## For AI agents (MCP)
+
+BounceWatch runs a remote MCP server, so Claude, Claude Code, Cursor, VS Code or your own agent
+can query company signals as a tool. Same API key, same credits, no separate subscription.
+
+```
+POST https://api.bouncewatch.com/api/v1/mcp
+Authorization: Bearer YOUR_API_KEY
+```
+
+[Connect your client →](https://docs.bouncewatch.com/mcp/setup)
 
 ## Use Cases
 

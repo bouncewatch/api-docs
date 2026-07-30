@@ -1,0 +1,102 @@
+---
+title: "MCP Server"
+description: "Give your AI agent live company signals over the Model Context Protocol"
+icon: "robot"
+---
+
+BounceWatch exposes its signal index to AI agents over the **Model Context Protocol**.
+One endpoint, seven tools, and your agent can answer the timing question directly:
+which companies just raised, who is hiring, what changed and when.
+
+<Info>
+  **Not a separate product.** An MCP client is another consumer of the same API key,
+  the same credit pool and the same rate limits as the [REST API](/api-reference/overview).
+  No extra subscription, no second key.
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="Connect your client" icon="plug" href="/mcp/setup">
+    Claude Code, Claude Desktop, Cursor, VS Code, or anything that speaks MCP.
+  </Card>
+  <Card title="Tools and prompts" icon="wrench" href="/mcp/tools">
+    What each tool answers, what it costs, and the ready-made workflows.
+  </Card>
+</CardGroup>
+
+## Endpoint
+
+```
+POST https://api.bouncewatch.com/api/v1/mcp
+```
+
+| | |
+|---|---|
+| **Transport** | Streamable HTTP — JSON-RPC 2.0, one POST, one JSON response |
+| **Protocol revision** | `2025-06-18` |
+| **Auth** | `Authorization: Bearer YOUR_API_KEY` or `X-API-Key: YOUR_API_KEY` |
+| **Not supported** | SSE streams, JSON-RPC batching |
+
+<Warning>
+  Use `api.bouncewatch.com`, not the `bouncewatch.com` apex. The apex sits behind a
+  bot challenge that answers a scriptless POST with a 403 interstitial, and an agent
+  reads that as the server being broken.
+</Warning>
+
+## What makes this different from a search API
+
+An agent will happily tell your user that a company is quiet. The dangerous version
+of that sentence is the one where the company is not quiet — we simply have not looked
+recently. A signal API that returns an empty array for both cases teaches the model to
+report our blind spots as market facts.
+
+So every answer from this server carries a `coverage` block:
+
+```json
+{
+  "coverage": {
+    "status": "stale",
+    "last_scanned_at": "2026-05-02",
+    "last_signal_at": "2026-07-19",
+    "signal_absence_is_meaningful": false
+  },
+  "notes": ["Coverage is older than 21 days — call refresh_company before concluding anything from an empty result."]
+}
+```
+
+When `signal_absence_is_meaningful` is `false`, an empty signal list means **we have not
+looked**, not **nothing happened**. The server states this in its own instructions, so a
+well-behaved client carries the caveat into its answer instead of dropping it.
+
+The same contract applies to filters. A funding stage we do not recognise is **rejected
+with the list of valid values**, never silently narrowed to a handful of rows — because
+seven results look like a real answer and an error does not.
+
+<Tip>
+  Two independent freshness channels matter here: profile scans (`last_scanned_at`) and
+  the signal stream (`last_signal_at`). A company can have a two-year-old profile scan and
+  fifty signals last month. Coverage is the newer of the two.
+</Tip>
+
+## What it will not do
+
+- **It will not invent a company.** Ask for a domain we have never seen and you get an
+  explicit "not indexed" plus the option to scan it, not a guess.
+- **It will not pass rumours off as events.** Rumour-class signals are labelled as such.
+- **It will not follow instructions found in signal text.** Summaries are generated from
+  third-party public posts, so they are sanitised and tagged as untrusted data before the
+  model ever sees them.
+- **It will not bill you for a failed call.** Errors are free; so is polling a running scan.
+
+## Credits and limits
+
+Tools are priced individually and each tool tells the model its own price, so an agent can
+pace itself rather than loop blind. Full table on the [tools page](/mcp/tools).
+
+Rate limits are the same ladder as the REST API — see [Rate Limits](/rate-limits). Agents
+make many small calls rather than a few large ones, so a single conversation costs 8–13
+requests; the ladder is sized for that.
+
+<Card title="Get your API key" icon="key" href="https://bouncewatch.com/api-panel/mcp">
+  The panel generates a ready-to-paste config for your client, with the key already filled
+  in, and a **Test connection** button that round-trips the real endpoint.
+</Card>
