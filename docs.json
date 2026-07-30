@@ -27,6 +27,14 @@
         ]
       },
       {
+        "group": "AI Agents (MCP)",
+        "pages": [
+          "mcp/overview",
+          "mcp/setup",
+          "mcp/tools"
+        ]
+      },
+      {
         "group": "API Reference",
         "pages": [
           "api-reference/overview",
@@ -60,7 +68,13 @@
     }
   },
   "contextual": {
-    "options": []
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity"
+    ]
   },
   "footer": {
     "socials": {
