@@ -49,9 +49,25 @@ Or write it into `.mcp.json` by hand:
 
 Verify with `claude mcp list`, then ask Claude Code a question about timing.
 
-## Claude Desktop
+## Claude — the Connect button
 
-Claude Desktop reaches remote servers through `mcp-remote`, a small local bridge that
+<Check>
+  **No key needed.** Open **Settings → Connectors → Add custom connector**, paste the
+  server URL and press Connect. Claude discovers the sign-in flow on its own; you approve
+  once in the browser and it is done.
+</Check>
+
+```
+https://api.bouncewatch.com/api/v1/mcp
+```
+
+Approved connections appear on your [MCP panel](https://bouncewatch.com/api-panel/mcp),
+and you can revoke any of them from there. Custom connectors need a paid Claude plan — on
+the free plan, use the config below.
+
+## Claude Desktop with an API key
+
+Claude Desktop can also reach us through `mcp-remote`, a small local bridge that
 attaches your key to every call.
 
 Open **Settings → Developer → Edit config**, or edit the file directly:
@@ -80,13 +96,6 @@ Open **Settings → Developer → Edit config**, or edit the file directly:
 ```
 
 Restart Claude after saving.
-
-<Warning>
-  **The "Add custom connector" dialog will not work with an API key.** It accepts OAuth
-  credentials only — there is no field for a bearer token or a custom header — and it
-  requires a paid Claude plan. Use the config above. OAuth support is on our roadmap; when
-  it ships, the one-click connector becomes an option too.
-</Warning>
 
 <Tip>
   The key goes in `env` and the header has no space after the colon on purpose. Claude
