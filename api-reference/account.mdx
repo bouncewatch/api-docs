@@ -15,7 +15,12 @@ The Account API allows you to manage your API account, check credit balance, mon
 | `GET /api/v1/account/info` | Get account information |
 | `GET /api/v1/account/credits` | Check credit balance |
 | `GET /api/v1/account/usage` | View usage statistics |
-| `POST /api/v1/account/webhook` | Configure webhooks |
+| `GET /api/v1/account/history` | Paginated request history |
+| `POST /api/v1/account/webhook` | Set your webhook URL |
+
+<Info>
+  All account endpoints are free — they never consume credits.
+</Info>
 
 ---
 
@@ -63,22 +68,37 @@ $data = json_decode($response, true);
   "success": true,
   "data": {
     "account": {
-      "id": "acc_123456",
+      "id": 1042,
       "name": "John Doe",
       "email": "john@company.com",
       "company_name": "Acme Corp",
       "plan_type": "professional",
       "status": "active",
-      "created_at": "2024-01-15T10:00:00Z"
+      "created_at": "2026-01-15T10:00:00.000000Z"
     },
     "limits": {
-      "credits_per_month": 50000,
-      "rate_per_minute": 120,
-      "rate_per_day": 10000
+      "credits_per_month": 25000,
+      "rate_per_minute": 150,
+      "rate_per_day": 5000
+    },
+    "plan_defaults": {
+      "credits_per_month": 25000,
+      "rate_per_minute": 150,
+      "rate_per_day": 5000
+    },
+    "rate_limits": {
+      "per_minute": 150,
+      "per_day": 5000
     }
   }
 }
 ```
+
+| Field | Description |
+|-------|-------------|
+| `limits` | What is **actually enforced** on your account. Read this one. |
+| `plan_defaults` | The catalogue values for your plan. Differs from `limits` only if a limit was raised for you individually. |
+| `rate_limits` | The rate half of `limits`, kept for backwards compatibility. |
 
 ---
 
@@ -124,15 +144,31 @@ $data = json_decode($response, true);
 {
   "success": true,
   "data": {
-    "credits_remaining": 5420,
-    "credits_total": 10000,
-    "credits_used": 4580,
-    "reset_date": "2025-02-01T00:00:00Z",
-    "plan_limit": 10000,
-    "additional_credits": 0
+    "credits": {
+      "balance": 21000,
+      "used": 4000,
+      "limit": 25000,
+      "total_purchased": 0,
+      "percentage_used": 16,
+      "resets_at": "2026-02-01T09:14:22.000000Z"
+    }
   }
 }
 ```
+
+| Field | Description |
+|-------|-------------|
+| `balance` | Credits you can still spend this period. This is the number to watch. |
+| `used` | Credits consumed this period. Returns to `0` at each renewal. |
+| `limit` | Your plan's allowance for the period. |
+| `total_purchased` | Lifetime total ever added by purchase. `0` on a free trial. |
+| `percentage_used` | `used / limit`, as a percentage of this period's allowance. |
+| `resets_at` | When the allowance was last renewed. `null` if it never has been. |
+
+<Warning>
+  **Credits do not roll over.** Each period starts at `limit`, whatever was left of the
+  previous one — 25,000 with 8,000 unspent renews at 25,000, not 33,000.
+</Warning>
 
 ---
 
@@ -144,19 +180,20 @@ View detailed usage statistics for your account.
 GET /api/v1/account/usage
 ```
 
-<ParamField query="period" type="string" default="month">
-  Time period: `day`, `week`, or `month`
-</ParamField>
+<Note>
+  This endpoint always reports the **current calendar month** and takes no parameters.
+  For a longer or arbitrary window, page through [`/account/history`](#get-request-history).
+</Note>
 
 <CodeGroup>
 ```bash cURL
-curl -X GET "https://api.bouncewatch.com/api/v1/account/usage?period=month" \
+curl -X GET "https://api.bouncewatch.com/api/v1/account/usage" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  'https://api.bouncewatch.com/api/v1/account/usage?period=month',
+  'https://api.bouncewatch.com/api/v1/account/usage',
   { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
 );
 ```
@@ -164,13 +201,12 @@ const response = await fetch(
 ```python Python
 response = requests.get(
     'https://api.bouncewatch.com/api/v1/account/usage',
-    headers={'X-API-Key': 'YOUR_API_KEY'},
-    params={'period': 'month'}
+    headers={'X-API-Key': 'YOUR_API_KEY'}
 )
 ```
 
 ```php PHP
-$ch = curl_init('https://api.bouncewatch.com/api/v1/account/usage?period=month');
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/usage');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
 $response = curl_exec($ch);
@@ -184,70 +220,158 @@ $data = json_decode($response, true);
 {
   "success": true,
   "data": {
-    "current_period": {
-      "start_date": "2025-01-01",
-      "end_date": "2025-02-01",
-      "total_requests": 342,
-      "total_credits": 4580,
-      "unique_domains": 128
+    "current_limits": {
+      "requests_today": 45,
+      "requests_this_minute": 2,
+      "last_request": "2026-02-10T14:22:05.000000Z"
     },
-    "by_module": {
-      "base": 3420,
-      "business": 680,
-      "funding": 340,
-      "team": 120,
-      "signals": 20,
-      "technology": 0,
-      "competitors": 0
+    "monthly_usage": {
+      "requests": 1250,
+      "credits_consumed": 3200,
+      "period": {
+        "start": "2026-02-01T00:00:00.000000Z",
+        "end": "2026-02-28T23:59:59.999999Z"
+      }
     },
-    "by_day": [
-      { "date": "2025-01-28", "requests": 45, "credits": 520 },
-      { "date": "2025-01-29", "requests": 52, "credits": 630 }
+    "top_endpoints": [
+      {
+        "endpoint": "/api/v1/company/stripe.com",
+        "requests": 42,
+        "credits_used": 520,
+        "avg_credits_per_request": 12.38
+      }
+    ],
+    "recent_requests": [
+      {
+        "id": 90211,
+        "endpoint": "/api/v1/company/stripe.com",
+        "method": "GET",
+        "credits_consumed": 26,
+        "response_status": 202,
+        "response_time": 0.184,
+        "error_message": null,
+        "requested_at": "2026-02-10T14:22:05.000000Z"
+      }
     ]
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `current_limits` | Live counters behind your rate limits |
+| `monthly_usage` | Totals for the current calendar month |
+| `top_endpoints` | Your ten busiest endpoints this month |
+| `recent_requests` | Your last 20 requests |
+
+---
+
+## Get Request History
+
+Page through your full request log, newest first.
+
+```
+GET /api/v1/account/history
+```
+
+<ParamField query="limit" type="integer" default="50">
+  Records to return. Capped at 100.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Records to skip.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.bouncewatch.com/api/v1/account/history?limit=50&offset=0" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch(
+  'https://api.bouncewatch.com/api/v1/account/history?limit=50&offset=0',
+  { headers: { 'X-API-Key': 'YOUR_API_KEY' } }
+);
+```
+
+```python Python
+response = requests.get(
+    'https://api.bouncewatch.com/api/v1/account/history',
+    headers={'X-API-Key': 'YOUR_API_KEY'},
+    params={'limit': 50, 'offset': 0}
+)
+```
+
+```php PHP
+$ch = curl_init('https://api.bouncewatch.com/api/v1/account/history?limit=50&offset=0');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY']);
+$response = curl_exec($ch);
+$data = json_decode($response, true);
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "requests": [
+      {
+        "id": 90211,
+        "endpoint": "/api/v1/company/stripe.com",
+        "method": "GET",
+        "credits_consumed": 26,
+        "response_status": 202,
+        "response_time": 0.184,
+        "requested_at": "2026-02-10T14:22:05.000000Z"
+      }
+    ],
+    "pagination": {
+      "total": 1250,
+      "limit": 50,
+      "offset": 0,
+      "has_more": true
+    }
   }
 }
 ```
 
 ---
 
-## Configure Webhook
+## Set Your Webhook URL
 
-Set up webhooks for account notifications.
+Store a default webhook URL on your account, so you don't have to send
+`X-Webhook-URL` on every request.
 
 ```
 POST /api/v1/account/webhook
 ```
 
 <ParamField body="webhook_url" type="string" required>
-  Your webhook endpoint URL (must be HTTPS)
+  Your webhook endpoint. Must be `https://` — plain http is rejected.
 </ParamField>
 
-<ParamField body="events" type="array" required>
-  Events to subscribe to
-</ParamField>
+<Info>
+  **There is nothing to subscribe to.** One URL receives every event for your account:
+  `enrichment.completed`, `enrichment.failed` and `enrichment.no_data_found`. There is no
+  `events` array and no per-event filtering — see [Webhooks](/webhooks) for the payloads.
+</Info>
 
-<ParamField body="secret" type="string">
-  Optional webhook secret for signature verification
-</ParamField>
-
-### Available Events
-
-| Event | Description |
-|-------|-------------|
-| `credit_low` | Credits below 20% |
-| `credit_depleted` | Credits reached 0 |
-| `enrichment.completed` | Realtime enrichment finished |
-| `enrichment.failed` | Realtime enrichment failed |
+<Warning>
+  Placeholder hosts are rejected with `422 invalid_webhook_url`. That includes
+  `example.com`, `your-domain.com`, `localhost` and `127.0.0.1` — so don't paste the
+  literal example from a tutorial. Use a [webhook.site](https://webhook.site) URL to test.
+</Warning>
 
 <CodeGroup>
 ```bash cURL
 curl -X POST "https://api.bouncewatch.com/api/v1/account/webhook" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "webhook_url": "https://your-domain.com/webhooks/bouncewatch",
-    "events": ["credit_low", "enrichment.completed"]
-  }'
+  -d '{"webhook_url": "https://webhook.site/YOUR-ID"}'
 ```
 
 ```javascript JavaScript
@@ -257,10 +381,7 @@ const response = await fetch('https://api.bouncewatch.com/api/v1/account/webhook
     'X-API-Key': 'YOUR_API_KEY',
     'Content-Type': 'application/json'
   },
-  body: JSON.stringify({
-    webhook_url: 'https://your-domain.com/webhooks/bouncewatch',
-    events: ['credit_low', 'enrichment.completed']
-  })
+  body: JSON.stringify({ webhook_url: 'https://webhook.site/YOUR-ID' })
 });
 ```
 
@@ -271,10 +392,7 @@ response = requests.post(
         'X-API-Key': 'YOUR_API_KEY',
         'Content-Type': 'application/json'
     },
-    json={
-        'webhook_url': 'https://your-domain.com/webhooks/bouncewatch',
-        'events': ['credit_low', 'enrichment.completed']
-    }
+    json={'webhook_url': 'https://webhook.site/YOUR-ID'}
 )
 ```
 
@@ -287,8 +405,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json'
 ]);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-    'webhook_url' => 'https://your-domain.com/webhooks/bouncewatch',
-    'events' => ['credit_low', 'enrichment.completed']
+    'webhook_url' => 'https://webhook.site/YOUR-ID'
 ]));
 $response = curl_exec($ch);
 $data = json_decode($response, true);
@@ -300,20 +417,18 @@ $data = json_decode($response, true);
 ```json
 {
   "success": true,
+  "message": "Webhook URL updated successfully",
   "data": {
-    "webhook_id": "wh_345678",
-    "webhook_url": "https://your-domain.com/webhooks/bouncewatch",
-    "events": ["credit_low", "enrichment.completed"],
-    "secret": "whsec_abc123xyz",
-    "status": "active",
-    "created_at": "2025-01-29T15:00:00Z"
+    "webhook_url": "https://webhook.site/YOUR-ID"
   }
 }
 ```
 
-<Warning>
-  Save the `secret` securely - you'll need it to verify webhook signatures.
-</Warning>
+<Note>
+  **Your signing secret is not returned here.** It is generated once with your account and
+  shown in the [API Panel → Webhooks](https://bouncewatch.com/api-panel/webhooks) page,
+  where you can also rotate it.
+</Note>
 
 <Card title="Webhook Setup Guide" icon="bell" href="/webhooks">
   Learn how to handle and verify webhook events →

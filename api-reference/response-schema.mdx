@@ -71,6 +71,14 @@ The API returns two different response structures depending on whether the domai
     | `status_endpoint` | string | Poll this URL to check enrichment progress |
     | `results_endpoint` | string | Fetch completed results from this URL |
     | `credits_reserved` | integer | Credits reserved upfront (refunded if enrichment fails) |
+
+    <Warning>
+      A domain **new to our index** returns a slightly different 202: the module list is
+      named `requested_modules` (not `modules_requested`), there is no `current_data`, and
+      `credits_remaining` is included. `success`, `batch_id`, `credits_reserved`,
+      `status_endpoint` and `results_endpoint` are present on both — key on those. See
+      [Company API](/api-reference/company-api#scenario-2-fresh-enrichment-async-response).
+    </Warning>
   </Tab>
 
   <Tab title="200 — Cached Data (Free)">
@@ -250,6 +258,7 @@ When enrichment completes, this payload is POSTed to your webhook URL:
       // Business Model
       "business_model": ["B2B", "SaaS", "Platform"],
       "revenue_model": ["Transaction Fees", "Subscription"],
+      "product_features": ["Hosted checkout", "Fraud detection", "Reporting API"],
       "target_audience": "Developers and businesses of all sizes",
       
       // Taxonomy

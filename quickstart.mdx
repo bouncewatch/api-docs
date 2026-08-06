@@ -8,6 +8,16 @@ icon: "bolt"
 
 <Check>You need an API key. If you don't have one, [create it here](https://bouncewatch.com/api-panel/api-keys).</Check>
 
+<Warning>
+  **You also need a webhook URL.** Any request that triggers a fresh enrichment is
+  refused with `400 webhook_required` unless we have somewhere to deliver the result.
+  Set one once in your [API Panel](https://bouncewatch.com/api-panel/webhooks), or send
+  `X-Webhook-URL` per request as the examples below do.
+
+  No endpoint yet? Open [webhook.site](https://webhook.site), copy the URL it gives you
+  and paste it in. It must be `https://`.
+</Warning>
+
 <Tip>
   **Prefer Postman?** Download our [Postman Collection](https://bouncewatch.com/postman/BounceWatch_Postman_Collection.zip) to get started quickly with pre-configured requests.
 </Tip>
@@ -21,12 +31,16 @@ icon: "bolt"
     <CodeGroup>
     ```bash cURL
     curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com" \
-      -H "X-API-Key: YOUR_API_KEY"
+      -H "X-API-Key: YOUR_API_KEY" \
+      -H "X-Webhook-URL: https://webhook.site/YOUR-ID"
     ```
 
     ```javascript JavaScript
     const response = await fetch('https://api.bouncewatch.com/api/v1/company/stripe.com', {
-      headers: { 'X-API-Key': 'YOUR_API_KEY' }
+      headers: {
+        'X-API-Key': 'YOUR_API_KEY',
+        'X-Webhook-URL': 'https://webhook.site/YOUR-ID'
+      }
     });
     const data = await response.json();
     ```
@@ -36,7 +50,10 @@ icon: "bolt"
 
     response = requests.get(
         'https://api.bouncewatch.com/api/v1/company/stripe.com',
-        headers={'X-API-Key': 'YOUR_API_KEY'}
+        headers={
+            'X-API-Key': 'YOUR_API_KEY',
+            'X-Webhook-URL': 'https://webhook.site/YOUR-ID'
+        }
     )
     data = response.json()
     ```
@@ -45,7 +62,8 @@ icon: "bolt"
     $ch = curl_init('https://api.bouncewatch.com/api/v1/company/stripe.com');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'X-API-Key: YOUR_API_KEY'
+        'X-API-Key: YOUR_API_KEY',
+        'X-Webhook-URL: https://webhook.site/YOUR-ID'
     ]);
     $response = curl_exec($ch);
     $data = json_decode($response, true);
@@ -54,20 +72,35 @@ icon: "bolt"
   </Step>
 
   <Step title="Review the Response">
-    **First request for a domain** — returns `202 Accepted` with a batch ID:
+    **A domain we have never enriched** — returns `202 Accepted` with a batch ID. Note
+    the field is `requested_modules` on this path; a domain already in our index returns
+    the same 202 with `modules_requested` and a `current_data` block alongside it.
 
     ```json
     {
       "success": true,
-      "status": "processing",
-      "batch_id": "batch_abc123xyz",
+      "message": "New domain added to enrichment queue",
+      "domain": "stripe.com",
       "enrichment_status": "processing",
-      "modules_requested": [],
+      "batch_id": "batch_abc123xyz",
+      "requested_modules": [],
+      "credits_reserved": 10,
+      "credits_remaining": 2490,
       "webhook_notification": "enabled",
       "status_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/status",
-      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results",
-      "credits_reserved": 10,
-      "message": "Enrichment jobs queued successfully. Fresh data will be sent to your webhook when ready."
+      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_abc123xyz/results"
+    }
+    ```
+
+    **No webhook configured** — returns `400`, and nothing is charged:
+
+    ```json
+    {
+      "success": false,
+      "error": "webhook_required",
+      "message": "Webhook URL is required for enrichment requests",
+      "hint": "Configure a webhook URL in your API panel at https://bouncewatch.com/api-panel/webhooks or provide it via the X-Webhook-URL header.",
+      "quick_test": "For quick testing, you can get a free webhook URL from https://webhook.site"
     }
     ```
 
@@ -162,7 +195,7 @@ Choose which modules to add:
 | `technology` | +4 | Tech stack, 100+ technologies |
 | `funding` | +10 | Funding rounds, investors |
 | `team` | +6 | Team members, hiring status |
-| `signals` | +16 | 40 signal types, highlights |
+| `signals` | +16 | 39 signal types, highlights |
 | `competitors` | +8 | Competitors, similar companies |
 
 <Tip>
@@ -206,8 +239,10 @@ $data = json_decode($response, true);
     "credits": {
       "balance": 4580,
       "used": 420,
-      "total_purchased": 5000,
-      "percentage_used": 8.4
+      "limit": 5000,
+      "total_purchased": 0,
+      "percentage_used": 8.4,
+      "resets_at": "2026-02-01T09:14:22.000000Z"
     }
   }
 }

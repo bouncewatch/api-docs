@@ -27,7 +27,7 @@ sequenceDiagram
     
     loop Check Status (optional)
         You->>API: GET /enrichment/{batch_id}/status
-        API->>You: Processing... 60%
+        API->>You: status: processing
     end
     
     Jobs->>Jobs: Collect fresh data (2-10 min)
@@ -235,16 +235,24 @@ function getResults($batchId) {
 
 ## Credit Handling
 
-Credits for enrichment are handled in stages:
+Credits are deducted when the batch is queued, and refunded in full if it produces
+nothing:
 
-| Stage | Action |
-|-------|--------|
-| **Request** | Credits are **reserved** based on requested modules |
-| **Completion** | Reserved credits are **charged** |
-| **Failure** | Unused credits are **refunded** |
+| Batch outcome | What you pay |
+|---------------|--------------|
+| `completed` | The full reserved amount |
+| `no_data_found` | **Nothing** — fully refunded |
+| `failed` | **Nothing** — fully refunded |
+
+<Warning>
+  Refunds are all-or-nothing at the batch level. If the batch completes but an individual
+  module came back thin, that is still a completed batch and the full amount stands —
+  there is no partial refund per module.
+</Warning>
 
 <Note>
-  If a module fails to enrich, you'll only be charged for successfully completed modules.
+  The refund lands on your balance before the webhook fires, so the `credits` block in the
+  webhook payload already reflects it.
 </Note>
 
 ## Webhook Notification

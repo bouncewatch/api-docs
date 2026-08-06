@@ -68,11 +68,19 @@ icon: "circle-question"
   </Accordion>
 
   <Accordion title="Do credits expire?" icon="clock">
-    Credits are tied to your billing cycle:
-    
-    - **Monthly plans:** Credits reset at the start of each billing month
-    - **Pay-as-you-go:** Purchased credits don't expire
-    
+    **Yes — credits do not roll over.** Each billing period starts at your plan's
+    allowance, whatever was left of the previous one.
+
+    On a 25,000-credit plan with 8,000 unspent at renewal, the new period begins at
+    25,000 — not 33,000. The allowance is what the period buys, not a balance that
+    accumulates.
+
+    <Note>
+      The one exception is a mid-cycle **upgrade**: you are charged for the new plan
+      immediately, so the credits you had already paid for are carried over and the new
+      plan's allowance is added on top.
+    </Note>
+
     Check your credit balance anytime:
     ```bash
     GET /api/v1/account/credits
@@ -81,10 +89,10 @@ icon: "circle-question"
 
   <Accordion title="Can I test the API before purchasing?" icon="flask">
     Yes! New accounts receive **2,500 free trial credits** to test the API.
-    
-    Trial accounts have slightly lower rate limits:
-    - 10 requests/minute
-    - 200 requests/day
+
+    Trial credits are one-time — they are not renewed. Trial rate limits:
+    - 60 requests/minute
+    - 500 requests/day
   </Accordion>
 
   <Accordion title="What data sources do you use?" icon="database">
@@ -130,15 +138,16 @@ icon: "circle-question"
   1. Check for typos or extra spaces in your API key
   2. Ensure you're using the header `X-API-Key` (case-sensitive)
   3. Verify your key hasn't been regenerated in the dashboard
-  4. Make sure the key is from the correct environment (production vs test)
-  
+
+  Keys start with `bw_`. There is no separate test key — every key is live.
+
   ```bash
   # Correct
-  curl -H "X-API-Key: bw_live_abc123..." https://api.bouncewatch.com/api/v1/company/stripe.com
-  
+  curl -H "X-API-Key: bw_abc123..." https://api.bouncewatch.com/api/v1/company/stripe.com
+
   # Wrong header name
-  curl -H "Authorization: Bearer bw_live_abc123..." # ❌ Won't work
-  curl -H "Api-Key: bw_live_abc123..." # ❌ Won't work
+  curl -H "Authorization: Bearer bw_abc123..." # ❌ Won't work
+  curl -H "Api-Key: bw_abc123..." # ❌ Won't work
   ```
 </Accordion>
 
@@ -227,18 +236,32 @@ icon: "circle-question"
   ```
 </Accordion>
 
-<Accordion title="404 Not Found - Company not found" icon="building">
-  **Problem:** The domain exists but we don't have data for it.
-  
-  **What happens:**
-  - For new domains, we automatically trigger realtime enrichment
-  - You'll receive a `202 Accepted` with a `batch_id`
-  - Data will be sent to your webhook when ready
-  
-  **If you get this error repeatedly:**
-  - The domain might not be a company website
-  - The company might be too small or new
-  - Check if the domain is spelled correctly
+<Accordion title="We have no data for this domain" icon="building">
+  **This is not a 404.** For a domain we have never seen, the API queues an enrichment and
+  answers `202 Accepted` with a `batch_id`. Results reach your webhook when ready.
+
+  If nothing is found, the batch finishes as `no_data_found`, **your credits are refunded
+  in full**, and the domain goes on a 24-hour cooldown — asking again inside that window
+  returns `409 no_data_cooldown` with a `Retry-After` header.
+
+  **If a domain repeatedly returns no data:**
+  - It might not be a company website
+  - The company might be too small or too new to have a public footprint
+  - Check the spelling
+</Accordion>
+
+<Accordion title="409 Conflict - already enriching, or recently enriched" icon="clone">
+  **Not a failure.** We deduplicate per domain so you are never charged twice for the
+  same work. Check the `error` field:
+
+  | `error` | Meaning | What to do |
+  |---------|---------|------------|
+  | `enrichment_in_progress` | A scan for this domain is already running | Wait for the webhook |
+  | `recently_enriched` | Enriched within the last 24 hours | Call `GET /company/{domain}` again — you get the data free |
+  | `no_data_cooldown` | We recently found nothing here | Honour the `Retry-After` header |
+
+  Treating 409 as a hard error is the most common integration mistake — it usually means
+  the data you want is either on its way or already free to fetch.
 </Accordion>
 
 ### Webhook Errors

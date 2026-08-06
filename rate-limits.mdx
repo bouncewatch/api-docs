@@ -24,32 +24,65 @@ Rate limits protect the API from abuse and ensure fair usage for all customers. 
 
 ## Rate Limit Headers
 
-Every API response includes rate limit information in the headers:
+Every authenticated response includes rate limit information in the headers:
 
 ```http
-X-RateLimit-Limit: 60
-X-RateLimit-Remaining: 45
-X-RateLimit-Reset: 1625097600
+X-RateLimit-Limit: 150
+X-RateLimit-Remaining: 145
+X-RateLimit-Reset: 1786011345
+X-RateLimit-Limit-Minute: 150
+X-RateLimit-Remaining-Minute: 145
+X-RateLimit-Limit-Day: 5000
+X-RateLimit-Remaining-Day: 4820
 ```
 
 | Header | Description |
 |--------|-------------|
 | `X-RateLimit-Limit` | Maximum requests allowed per minute |
-| `X-RateLimit-Remaining` | Requests remaining in current window |
-| `X-RateLimit-Reset` | Unix timestamp when the limit resets |
+| `X-RateLimit-Remaining` | Requests remaining in the current minute |
+| `X-RateLimit-Reset` | Unix timestamp when the per-minute window resets |
+| `X-RateLimit-Limit-Minute` / `-Remaining-Minute` | Same as the two above, explicitly scoped |
+| `X-RateLimit-Limit-Day` / `-Remaining-Day` | The daily budget and what is left of it |
+
+<Tip>
+  There are two independent budgets. `X-RateLimit-Remaining` only covers the minute — check
+  `X-RateLimit-Remaining-Day` too if you run long batches.
+</Tip>
 
 ## Handling Rate Limits
 
-When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+When you exceed either limit, you'll receive a `429 Too Many Requests` with a
+`Retry-After` header:
 
 ```json
 {
   "success": false,
   "error": "rate_limit_exceeded",
   "message": "Rate limit exceeded. Please retry after 45 seconds.",
-  "retry_after": 45
+  "retry_after": 45,
+  "limits": {
+    "per_minute": 150,
+    "per_day": 5000,
+    "current_minute": 150,
+    "current_day": 3204
+  },
+  "reset_time": {
+    "next_minute": "2026-02-10T14:23:00.000000Z",
+    "next_day": "2026-02-11T00:00:00.000000Z"
+  }
 }
 ```
+
+<Note>
+  `retry_after` counts seconds to the next window that will actually admit you — the top
+  of the minute normally, midnight if it was the daily budget you exhausted.
+</Note>
+
+<Warning>
+  A `429` can also mean `concurrent_limit_reached`: too many enrichments in flight at once
+  (2 on trial, up to 100 on enterprise). Check the `error` field — waiting a minute will
+  not help there, you need an in-flight enrichment to finish.
+</Warning>
 
 ### Implementation Examples
 

@@ -10,7 +10,7 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
 
 <CardGroup cols={2}>
   <Card title="Modular Architecture" icon="cubes">
-    Only fetch the data you need. Flexible usage with 7 different enrichment modules.
+    Only fetch the data you need — base data plus any of 6 enrichment modules.
   </Card>
   <Card title="Smart Enrichment" icon="wand-magic-sparkles">
     Fresh data collected on-demand. Cached instantly for 24 hours at no extra cost.
@@ -85,25 +85,26 @@ BounceWatch API is a comprehensive intelligence platform for **startup and compa
   </Accordion>
   
   <Accordion title={<>Signals/Highlights <Badge color="green" size="sm">New</Badge></>} icon="signal">
-    40 different signal types across 8 categories.
-    
-    **Business & Partnerships:** Partnership Announced, Major Customer Win, Accepted to Program
-    
-    **Product & Growth:** New Product Launched, New Feature Launched, Mobile App Launched, Growth Metrics Shared, Revenue Metrics Shared
-    
-    **Expansion:** Expansion Announced, New Office Opened
-    
-    **Recognition:** Award Received, Certification Achieved
-    
-    **Team Changes:** Key Hire Announced, Key Exit Announced, Layoffs Announced
-    
-    **Regulatory & Strategy:** Regulatory Approval, Shutdown Announced, Pivot Announced, Not Active
-    
-    **Events:** Event Participation
-    
-    **Rumors & Intents:** Acquisition Rumor, IPO Rumor, Partnership Talks, Expansion Plan, Layoff Rumor, Leadership Change Rumor, Shutdown Risk
-    
-    **Metric-Based Highlights:** Employee Count Change, LinkedIn Follower Change, Website Visitors Change, Website Content Change, Mentioned on News, Hiring for Key Role, New Funding Received
+    39 signal types across 8 categories.
+
+    **Funding:** Raised a round, signalled intent to raise, grant received
+
+    **Hiring:** Senior hire, open roles, open role in a key function, headcount moved
+
+    **Business:** Partnership announced, partnership talks, major customer win, expansion announced, expansion plan, new office opened, regulatory approval, certification achieved
+
+    **Product:** Product launched, feature shipped, mobile app released, homepage repositioned
+
+    **Growth:** Growth metrics published, revenue metrics published, web traffic moved, LinkedIn following moved
+
+    **Milestone:** IPO announced, IPO rumour, acquired, acquired a company, acquisition rumour
+
+    **Risk:** Shutdown announced, shutdown risk, layoffs announced, layoff rumour, senior departure, leadership change rumour, pivot announced
+
+    **Event:** Event attendance, award received, programme acceptance, news mention
+
+    Rumours and inferences are flagged `unconfirmed` in the response so you never report
+    one as an announcement.
   </Accordion>
   
   <Accordion title="Competitors" icon="chess">

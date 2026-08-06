@@ -38,15 +38,24 @@ GET /api/v1/company/{domain}
 
 ```mermaid
 flowchart TD
-    A[GET /company/domain.com] --> B{Data enriched\nwithin 24h?}
-    B -->|Yes| C[Return cached data instantly\n200 OK - No charge]
-    B -->|No| D{Webhook\nconfigured?}
-    D -->|Yes| E[Queue enrichment jobs\n202 Accepted]
-    D -->|No| F[400 Error\nWebhook required]
+    A[GET /company/domain.com] --> B{Enriched\nwithin 24h?}
+    B -->|Yes| C[200 OK\nCached data, 0 credits]
+    B -->|No| J{Already\nenriching?}
+    J -->|Yes| K[409 Conflict\nenrichment_in_progress]
+    J -->|No| D{https webhook\nconfigured?}
+    D -->|No| F[400 Bad Request\nwebhook_required]
+    D -->|Yes| E[202 Accepted\nJobs queued, credits reserved]
     E --> G[Background enrichment\n2-10 minutes]
-    G --> H[Results sent to webhook]
-    G --> I[Poll /enrichment/batch_id/status]
+    G --> H[Results POSTed to your webhook]
+    G --> I[Or poll /enrichment/batch_id/status]
 ```
+
+<Warning>
+  **409 is normal, not an error to alarm on.** We deduplicate per domain, so a second
+  request while one is in flight — or within 24 hours of a completed one — returns 409
+  rather than charging you twice. `recently_enriched` means "ask this endpoint again and
+  the data comes back free".
+</Warning>
 
 ### Scenario 1: Recent Data Available (Instant Response)
 
@@ -68,25 +77,57 @@ If the same domain was enriched within the last 24 hours, you get the data insta
 
 ### Scenario 2: Fresh Enrichment (Async Response)
 
-If no recent data exists, enrichment is triggered automatically:
+If no recent data exists, enrichment is triggered automatically and you get `202`.
 
-```json
-{
-  "success": true,
-  "status": "processing",
-  "batch_id": "batch_1gVwXby8PsYHoMQR",
-  "current_data": { ... },
-  "enrichment_status": "processing",
-  "modules_requested": ["business", "funding"],
-  "modules_count": 2,
-  "webhook_notification": "enabled",
-  "status_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/status",
-  "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/results",
-  "credits_reserved": 20,
-  "message": "Enrichment jobs queued successfully. Fresh data will be sent to your webhook when ready.",
-  "hint": "Results will be delivered to your webhook URL. You can also poll the status_endpoint to check progress."
-}
-```
+**Two shapes, depending on whether we already hold the company.** Both always carry
+`success`, `batch_id`, `credits_reserved`, `status_endpoint` and `results_endpoint` —
+key your integration on those.
+
+<Tabs>
+  <Tab title="Company already in our index">
+    ```json
+    {
+      "success": true,
+      "status": "processing",
+      "batch_id": "batch_1gVwXby8PsYHoMQR",
+      "current_data": { "company": { }, "funding": { } },
+      "enrichment_status": "processing",
+      "modules_requested": ["business", "funding"],
+      "modules_count": 2,
+      "webhook_notification": "enabled",
+      "status_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/status",
+      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/results",
+      "credits_reserved": 26,
+      "message": "Enrichment jobs queued successfully. Fresh data will be sent to your webhook when ready.",
+      "hint": "Results will be delivered to your webhook URL. You can also poll the status_endpoint to check progress."
+    }
+    ```
+
+    `current_data` holds whatever we already had — possibly stale, possibly incomplete.
+    It is there so you have something to show while the refresh runs.
+  </Tab>
+
+  <Tab title="Domain new to us">
+    ```json
+    {
+      "success": true,
+      "message": "New domain added to enrichment queue",
+      "domain": "stripe.com",
+      "enrichment_status": "processing",
+      "batch_id": "batch_1gVwXby8PsYHoMQR",
+      "requested_modules": ["business", "funding"],
+      "credits_reserved": 26,
+      "credits_remaining": 4974,
+      "webhook_notification": "enabled",
+      "status_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/status",
+      "results_endpoint": "https://api.bouncewatch.com/api/v1/enrichment/batch_1gVwXby8PsYHoMQR/results"
+    }
+    ```
+
+    Differences from the other shape: the module list is called `requested_modules`,
+    there is no `current_data` (we have nothing yet), and `credits_remaining` is included.
+  </Tab>
+</Tabs>
 
 ## Request Examples
 
@@ -318,7 +359,7 @@ This means your typical workflow is:
 | `technology` | +4 | Tech stack, 100+ technologies |
 | `funding` | +10 | Funding rounds, investors, valuations |
 | `team` | +6 | Team members, hiring status |
-| `signals` | +16 | 40 signal types, highlights |
+| `signals` | +16 | 39 signal types, highlights |
 | `competitors` | +8 | Competitors, similar companies |
 
 ## Processing Times

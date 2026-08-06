@@ -12,17 +12,22 @@ All API requests must include your API key in the request header.
 X-API-Key: your_api_key_here
 ```
 
+<Info>
+  Keys are prefixed `bw_` followed by 32 random characters. There is no separate
+  test/live key — every key is live and bills against your credit balance.
+</Info>
+
 <CodeGroup>
 ```bash cURL
 curl -X GET "https://api.bouncewatch.com/api/v1/company/stripe.com" \
-  -H "X-API-Key: bw_live_1234567890abcdef" \
+  -H "X-API-Key: bw_9f3c2a71d84e05b6c1f7a92d3e480b5c" \
   -H "Content-Type: application/json"
 ```
 
 ```javascript JavaScript
 const response = await fetch('https://api.bouncewatch.com/api/v1/company/stripe.com', {
   headers: {
-    'X-API-Key': 'bw_live_1234567890abcdef',
+    'X-API-Key': 'bw_9f3c2a71d84e05b6c1f7a92d3e480b5c',
     'Content-Type': 'application/json'
   }
 });
@@ -34,7 +39,7 @@ import requests
 response = requests.get(
     'https://api.bouncewatch.com/api/v1/company/stripe.com',
     headers={
-        'X-API-Key': 'bw_live_1234567890abcdef',
+        'X-API-Key': 'bw_9f3c2a71d84e05b6c1f7a92d3e480b5c',
         'Content-Type': 'application/json'
     }
 )
@@ -44,7 +49,7 @@ response = requests.get(
 $ch = curl_init('https://api.bouncewatch.com/api/v1/company/stripe.com');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'X-API-Key: bw_live_1234567890abcdef',
+    'X-API-Key: bw_9f3c2a71d84e05b6c1f7a92d3e480b5c',
     'Content-Type: application/json'
 ]);
 $response = curl_exec($ch);
@@ -89,7 +94,7 @@ Store your API key securely using environment variables:
 <Tabs>
   <Tab title="Node.js">
     ```bash .env
-    BOUNCEWATCH_API_KEY=bw_live_1234567890abcdef
+    BOUNCEWATCH_API_KEY=bw_9f3c2a71d84e05b6c1f7a92d3e480b5c
     ```
 
     ```javascript app.js
@@ -99,7 +104,7 @@ Store your API key securely using environment variables:
   </Tab>
   <Tab title="Python">
     ```bash .env
-    BOUNCEWATCH_API_KEY=bw_live_1234567890abcdef
+    BOUNCEWATCH_API_KEY=bw_9f3c2a71d84e05b6c1f7a92d3e480b5c
     ```
 
     ```python app.py
@@ -112,7 +117,7 @@ Store your API key securely using environment variables:
   </Tab>
   <Tab title="PHP">
     ```bash .env
-    BOUNCEWATCH_API_KEY=bw_live_1234567890abcdef
+    BOUNCEWATCH_API_KEY=bw_9f3c2a71d84e05b6c1f7a92d3e480b5c
     ```
 
     ```php config.php
@@ -125,7 +130,7 @@ Store your API key securely using environment variables:
   </Tab>
   <Tab title="Shell">
     ```bash
-    export BOUNCEWATCH_API_KEY=bw_live_1234567890abcdef
+    export BOUNCEWATCH_API_KEY=bw_9f3c2a71d84e05b6c1f7a92d3e480b5c
     ```
 
     ```bash
@@ -137,20 +142,26 @@ Store your API key securely using environment variables:
 
 ## Authentication Errors
 
-| Error Code | Message | Solution |
-|------------|---------|----------|
-| `401` | `Invalid API key` | Check that your API key is correct |
-| `401` | `API key missing` | Add the `X-API-Key` header |
-| `401` | `API key expired` | Generate a new API key |
-| `403` | `API key disabled` | Contact support to reactivate |
+| HTTP | `error` | Solution |
+|------|---------|----------|
+| `401` | `missing_api_key` | Add the `X-API-Key` header |
+| `401` | `invalid_api_key` | Check the key — it may have been regenerated |
+| `403` | `api_key_disabled` | Account suspended; contact support |
+| `403` | `ip_not_allowed` | Your calling IP is outside the key's allow-list |
+| `402` | `subscription_required` | Subscription expired — upgrade in the billing panel |
 
 ```json Error Response
 {
   "success": false,
-  "error": "unauthorized",
-  "message": "Invalid API key provided"
+  "error": "invalid_api_key",
+  "message": "The provided API key is not valid"
 }
 ```
+
+<Note>
+  Keys do not expire on their own. A key stops working only if it is regenerated, the
+  account is suspended, or the subscription lapses.
+</Note>
 
 ## Key Rotation
 
