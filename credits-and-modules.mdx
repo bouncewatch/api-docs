@@ -278,7 +278,9 @@ echo "Credits remaining: " . $data['data']['credits']['balance'];
     Company data doesn't change frequently. Cache responses for 24 hours to save credits.
   </Card>
   <Card title="Monitor Usage" icon="chart-simple">
-    Set up [webhooks](/webhooks) to get notified when credits run low.
+    Poll [`GET /account/credits`](/api-reference/account#get-credit-balance) — it returns
+    `balance`, `used`, `limit`, `percentage_used` and `resets_at`. Webhooks fire on
+    enrichment events only; there is no credit-threshold event to subscribe to.
   </Card>
   <Card title="Batch Wisely" icon="layer-group">
     Group similar enrichment requests to optimize credit usage.
@@ -306,7 +308,7 @@ If you don't have enough credits for a request, you get `402 Payment Required`:
 </Note>
 
 <Card title="Need More Credits?" icon="plus" href="https://bouncewatch.com/api-panel/billing">
-  Upgrade your plan or purchase additional credits →
+  Upgrade your plan → the new allowance is added on top of what is left of the current one
 </Card>
 <Card title="View Complete Response Structure" icon="sitemap" href="/api-reference/response-schema">
   See exactly what data each module returns →
