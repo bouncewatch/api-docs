@@ -8,6 +8,17 @@
     "dark": "#0D193A"
   },
   "favicon": "/favicon.png",
+  "api": {
+    "openapi": "openapi.json",
+    "playground": {
+      "display": "interactive",
+      "proxy": true
+    },
+    "examples": {
+      "languages": ["curl", "javascript", "python", "php"],
+      "defaults": "required"
+    }
+  },
   "navigation": {
     "groups": [
       {
@@ -42,6 +53,20 @@
           "api-reference/company-api",
           "api-reference/enrichment-tracking",
           "api-reference/account"
+        ]
+      },
+      {
+        "group": "API Playground",
+        "openapi": "openapi.json",
+        "pages": [
+          "GET /company/{domain}",
+          "GET /enrichment/{batch_id}/status",
+          "GET /enrichment/{batch_id}/results",
+          "GET /account/info",
+          "GET /account/credits",
+          "GET /account/usage",
+          "GET /account/history",
+          "POST /account/webhook"
         ]
       }
     ]
