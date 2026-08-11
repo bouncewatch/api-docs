@@ -1,6 +1,6 @@
 ---
 title: "Tools and prompts"
-description: "The seven MCP tools, what they cost, and the ready-made workflows"
+description: "The ten MCP tools, what they cost, and the ready-made workflows"
 icon: "wrench"
 ---
 
@@ -12,12 +12,15 @@ the meter running and pace itself instead of looping blind.
 | Tool | Credits | What it answers |
 |---|---:|---|
 | `search_signals` | 12 | Which companies did X recently — the timing question. Supports signal stacking for "raised **and** hiring". |
-| `search_companies` | 5 | Which of the companies we observe fit these firmographics. 25 with `include_unindexed`, which reaches a live external index. |
+| `search_companies` | 5 | Which of the companies we observe fit these firmographics. |
+| `find_company` | 3 | A company name to its domain — the argument every tool below needs. |
 | `get_company` | 10 + modules | Firmographic profile of one company. |
 | `get_company_signals` | 8 | Dated signal timeline for one company. |
-| `refresh_company` | 10 + modules | Queues a live scan and returns a batch id. Also how a domain we have never seen gets indexed. |
-| `get_refresh_status` | **free** | Polls a running scan. Free by design — the async model only works if waiting is free. |
-| `get_signal_taxonomy` | **free** | The signal vocabulary. Call it once per session before filtering. |
+| `refresh_company` | 36 default | Queues a live scan and returns a batch id. Also how a domain we have never seen gets indexed. |
+| `get_refresh_status` | **free** | Polls a running scan, and waits for its writes to settle. Free by design — the async model only works if waiting is free. |
+| `watch_company` | 5 | Registers a standing interest. The only tool that outlives the session it was called in. |
+| `check_watches` | **free** | Collects what has fired since you last asked. |
+| `get_signal_taxonomy` | **free** | The signal vocabulary, plus which categories are dense and which are rare. Call it once per session. |
 
 <Info>
   Module prices come from the same table as the REST API, so the same data costs the same
@@ -37,7 +40,8 @@ The cross-company question: *who did something worth reacting to, and when.*
 | `days` | integer | Lookback window, up to 365. |
 | `country` | string | ISO country code. |
 | `min_employees` / `max_employees` | integer | Headcount bounds. |
-| `funding_stage` | string | Matched loosely: `series-a`, `Series A` and `SERIES_A` all land on the same stage. An unknown value is rejected with the valid list. |
+| `funding_stage` | string | Matched loosely: `series-a`, `Series A` and `SERIES_A` all land on the same stage. An unknown value is rejected with the valid list. The costliest filter here — see the note below. |
+| `min_weight` | integer | Floor on how much a signal has to matter, 1-10. |
 | `sort` | string | Result ordering. |
 | `limit` | integer | Default 25, max 100. |
 
@@ -49,13 +53,40 @@ ranked list of 25 is not mistaken for the whole market.
   on its own; "raised a round **and** is hiring sales roles" is a much smaller, much warmer list.
 </Tip>
 
+<Warning>
+  **`funding_stage` narrows twice.** We hold a stage for about 60% of the companies we observe,
+  and the rest are excluded rather than guessed at — so the filter cuts by stage *and* by what
+  we happen to know. A short result is as likely to be a gap in our records as a fact about the
+  market, and the response says so in `notes`.
+</Warning>
+
+### find_company
+
+Every tool here takes a **domain**, and you will usually have a **name**. Guessing the domain is
+the expensive mistake: a wrong guess comes back as "not indexed" for a company we actually hold,
+and sends the agent on to spend a scan on a host nobody checked.
+
+`find_company` takes a `name` (a domain works too and is resolved directly), an optional
+`country` and `limit`, and returns a handful of candidates with the few fields that tell them
+apart — country, founding year, headcount, and when we last saw a signal. It never picks for
+you. Once you have chosen, `get_company` returns the full profile.
+
+If search is unavailable it returns an explicit error rather than an empty list, because
+"we could not look" and "not in the index" are different answers and only one of them is true.
+
 ### search_companies
 
-Firmographic search over the index: `country`, `min_employees`, `max_employees`,
-`funding_stage`, `keyword`, `employee_range`, `observed_within_days`, `limit`.
+Firmographic search over the companies we watch: `country`, `min_employees`, `max_employees`,
+`funding_stage`, `observed_within_days`, `founded_after`, `founded_before`, `limit`.
 
-Set `include_unindexed: true` to reach a live external index for companies we have not seen
-yet. That path costs **25 credits** rather than 5, because it spends real money per result.
+`observed_within_days` is floored at 30 and capped at 365. There is deliberately no way to
+search the whole index: this tool covers what we observe, and every answer carries a `coverage`
+block saying how many companies that is.
+
+Each result reports `signal_activity.level` — `light`, `moderate`, `high` — rather than a raw
+count. Nobody acts differently on six signals versus eight, and a bare number invites a
+comparison against vendors who count every conference badge. `latest_signal_date` stays exact;
+timing is the thing worth being precise about.
 
 ### get_company / get_company_signals
 
@@ -66,7 +97,46 @@ and returns the dated timeline — the raw material for a "why now" argument.
 ### refresh_company / get_refresh_status
 
 `refresh_company` takes a `domain` and optional `modules`, queues a scan and hands back a
-`batch_id`. `get_refresh_status` polls that id for free until the scan lands.
+`batch_id`. `get_refresh_status` polls that id for free until the scan lands — the call blocks
+and waits for you, so a scan costs two or three patient calls rather than twenty impatient ones.
+
+A scan only refreshes what you ask for, and anything left out keeps the date it already had.
+The default is `signals` + `funding`, the two that go out of date fastest; every result names
+both what it refreshed and what it did not.
+
+<Warning>
+  **Read `is_finished`, not `status`.** A batch reaches `completed` when its jobs report back,
+  but the signal analysis they started keeps writing rows for a few seconds afterwards. Read too
+  early and you get the pre-scan picture with a completed stamp on it. `status` becomes
+  `settling` for that window and `is_finished` stays false until the writes stop. When it
+  finishes, `signals_added` says how many new signals the scan actually produced — zero is a
+  real answer.
+</Warning>
+
+### watch_company / check_watches
+
+MCP is request-response: a server can only ever answer, never initiate. So every company-data
+MCP server is read-only pull, and an agent finds out something changed only if a human happens
+to ask again.
+
+It does not need the protocol. **Registration is an ordinary tool call; the wake-up travels out
+of band.** `watch_company` records a standing interest in a company, optionally narrowed by
+`signal_keys` or `min_weight`. When a matching signal lands it is delivered two ways:
+
+- **An inbox**, drained by `check_watches` — free, and it returns only what is new since your
+  last call. This is the path for an agent living inside a chat client, which has no address to
+  be called back on.
+- **A webhook**, if the key has one configured — `signal.matched`, signed exactly like an
+  enrichment webhook so you do not need a second verifier. This is the path that genuinely wakes
+  a hosted agent.
+
+The webhook never replaces the inbox row, so a failed delivery is not a lost event.
+
+<Tip>
+  This is the right instrument for the rare, high-value signals. A funding round is a few
+  hundred events across the whole index in a quarter — the odds one lands inside the window you
+  happen to search are poor. You do not search for a funding round; you wait for one.
+</Tip>
 
 Guardrails, because an agent loop can dispatch scans far faster than a person would: a daily
 cap per key, per-plan concurrency, a 24-hour cooldown on the same domain, and a global
@@ -83,7 +153,7 @@ or slash command. Rendering one is free; the tools it triggers are billed normal
 | `why_now` | `domain` *(required)*, `offering` | An outreach angle for one account: what changed, why it matters, what to open with. |
 | `funded_and_hiring` | `country`, `days` | Closed a round **and** hiring in the same window — new budget plus a mandate to spend it. |
 | `account_watch_brief` | `domains` *(required)*, `days` | What happened across a named list of accounts, ranked by what deserves attention. |
-| `risk_scan` | `domains` *(required)* | Layoffs, shutdowns, leadership exits and other distress indicators. |
+| `risk_scan` | `domains` *(required)* | Layoffs, shutdowns, leadership exits and other distress indicators. Finding nothing is the normal and good outcome — it is a screen, not a search. |
 
 <Info>
   The real value is not the phrasing. Each template has the correct tool sequence and the

@@ -5,8 +5,9 @@ icon: "robot"
 ---
 
 BounceWatch exposes its signal index to AI agents over the **Model Context Protocol**.
-One endpoint, seven tools, and your agent can answer the timing question directly:
-which companies just raised, who is hiring, what changed and when.
+One endpoint, ten tools, and your agent can answer the timing question directly:
+which companies just raised, who is hiring, what changed and when — and be told when
+something happens next, without asking again.
 
 <Info>
   **Not a separate product.** An MCP client is another consumer of the same API key,
@@ -33,7 +34,7 @@ POST https://api.bouncewatch.com/api/v1/mcp
 |---|---|
 | **Transport** | Streamable HTTP — JSON-RPC 2.0, one POST, one JSON response |
 | **Protocol revision** | `2025-06-18` |
-| **Auth** | `Authorization: Bearer YOUR_API_KEY` or `X-API-Key: YOUR_API_KEY` |
+| **Auth** | OAuth 2.1 (press Connect, approve in the browser), or `Authorization: Bearer YOUR_API_KEY` / `X-API-Key: YOUR_API_KEY` |
 | **Not supported** | SSE streams, JSON-RPC batching |
 
 <Warning>
@@ -76,6 +77,33 @@ seven results look like a real answer and an error does not.
   the signal stream (`last_signal_at`). A company can have a two-year-old profile scan and
   fifty signals last month. Coverage is the newer of the two.
 </Tip>
+
+Search results carry the same contract at the other scale. Every list states the size of the
+universe it searched, so twelve results are read as twelve out of the set we watch rather than
+as twelve in the world.
+
+## A signal feed, not a company database
+
+This is worth being blunt about, because it decides which questions get good answers.
+
+We hold over a million companies, and in a given ninety days a little over thirteen thousand of
+them produce a signal. That is not a coverage gap — a company that did nothing produces nothing
+to observe — but it means "list every company that matches these attributes" is the wrong
+question to bring here. "What changed, and when" is the right one.
+
+The tools are shaped accordingly. `search_companies` cannot be pointed at the whole index: it
+searches what we observed, and says how much that is. There is no path to a third-party company
+directory. And `get_signal_taxonomy` returns a measured `coverage` block naming which signal
+categories produce steadily and which are rare.
+
+That last one matters more than it sounds. **Weight and volume run in opposite directions.**
+Conference appearances and follower moves are constant and nearly worthless; funding rounds,
+acquisitions and shutdowns are worth the most and happen a few hundred times a quarter across
+every company we watch. An agent that filters for the valuable ones and finds little will
+conclude our coverage is thin, when what it has actually found is how often those events occur.
+
+So: search the dense end, **watch** the rare end. `watch_company` exists for exactly the signals
+a window search will keep missing.
 
 ## What it will not do
 
