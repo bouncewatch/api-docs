@@ -33,9 +33,48 @@
     {
       "name": "Account",
       "description": "Plan, credits, usage and webhook configuration. None of these consume credits."
+    },
+    {
+      "name": "Status",
+      "description": "Liveness. No key, no credits — point your uptime monitor here."
     }
   ],
   "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Status"],
+        "summary": "Health check",
+        "operationId": "getHealth",
+        "security": [],
+        "description": "Is the API able to serve a request? No API key, no credits, no rate-limit cost worth worrying about.\n\n**Point your uptime monitor at this and nothing else.** Monitoring `/company/{domain}` instead needs a key, spends credits on every poll, and reports a `401` as an outage.\n\nDeliberately narrow: it answers whether the request path is up, not whether every part of the platform is well. A slow scraper or a backed-up queue is a real problem and still not a reason to call the API down, so neither is checked here.\n\n`200` means serving. `503` means the API cannot reach its database and cannot answer a single call — treat it as down.",
+        "responses": {
+          "200": {
+            "description": "Serving normally.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "service": { "type": "string", "example": "bouncewatch-api" },
+                    "time": { "type": "string", "format": "date-time" },
+                    "checks": {
+                      "type": "object",
+                      "properties": {
+                        "database": { "type": "boolean", "example": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Degraded — the API cannot reach its database. Treat as down."
+          }
+        }
+      }
+    },
     "/company/{domain}": {
       "get": {
         "tags": ["Company"],
