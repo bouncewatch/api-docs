@@ -55,27 +55,40 @@ So every answer from this server carries a `coverage` block:
 ```json
 {
   "coverage": {
-    "status": "stale",
-    "last_scanned_at": "2026-05-02",
-    "last_signal_at": "2026-07-19",
-    "signal_absence_is_meaningful": false
-  },
-  "notes": ["Coverage is older than 21 days — call refresh_company before concluding anything from an empty result."]
+    "monitoring": "periodic",
+    "channels": { "last_signal_at": "2026-07-19" },
+    "signal_absence_is_meaningful": false,
+    "interpretation": "We check in on this company rather than following it continuously, so its record is not guaranteed to be complete right now. Do not read an empty or short signal list as a quiet period — refresh_company brings it up to date immediately.",
+    "refresh_recommended": true
+  }
 }
 ```
 
+`monitoring` says how closely the company is followed — `continuous`, `active`,
+`periodic`, `on_demand`, or `not_indexed` for one we have never seen. It is a band and
+never a date, because a date would tell you when we last bothered to look rather than
+anything about the company.
+
 When `signal_absence_is_meaningful` is `false`, an empty signal list means **we have not
-looked**, not **nothing happened**. The server states this in its own instructions, so a
-well-behaved client carries the caveat into its answer instead of dropping it.
+looked**, not **nothing happened**. `interpretation` is the same fact written for the
+model, so a well-behaved client carries the caveat into its answer instead of dropping it.
+
+<Note>
+  `monitoring` and `signal_absence_is_meaningful` can disagree, and that is deliberate.
+  `periodic` reads as a service — we check in on this company — while the boolean is
+  `false`, telling the model it may not treat an empty list as a quiet period. Reassuring
+  tone, cautious claim. They answer different questions.
+</Note>
 
 The same contract applies to filters. A funding stage we do not recognise is **rejected
 with the list of valid values**, never silently narrowed to a handful of rows — because
 seven results look like a real answer and an error does not.
 
 <Tip>
-  Two independent freshness channels matter here: profile scans (`last_scanned_at`) and
-  the signal stream (`last_signal_at`). A company can have a two-year-old profile scan and
-  fifty signals last month. Coverage is the newer of the two.
+  Two independent observation channels feed a company: the profile crawl and the signal
+  stream. Only the signal date travels in `channels` — a company can have a long-stale
+  profile and fifty signals last month, and when that happens the block carries a
+  `profile_note` saying the firmographic fields are older than the events beside them.
 </Tip>
 
 Search results carry the same contract at the other scale. Every list states the size of the
