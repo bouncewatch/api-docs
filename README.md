@@ -17,7 +17,7 @@ BounceWatch API provides detailed information about companies with a single API 
 - **Technology Stack** - Tools, frameworks, and infrastructure across 100+ technology categories
 - **Funding & Investment** - Funding rounds, investors, valuation, total funding
 - **Team & Hiring** - Team members, leadership, hiring status, open positions
-- **Signals/Highlights** - 39 signal types across 8 categories: funding, hiring, business, product, growth, milestone, risk and event
+- **Signals/Highlights** - 40+ signal types across 8 categories: funding, hiring, business, product, growth, milestone, risk and event
 - **Competitors** - Similar companies, competitor analysis, market positioning
 
 ## Key Features
