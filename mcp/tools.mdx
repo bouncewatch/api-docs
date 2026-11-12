@@ -90,13 +90,15 @@ timing is the thing worth being precise about.
 
 ### get_company / get_company_signals
 
-`get_company` takes a `domain` and an optional `include` list of enrichment modules.
+`get_company` takes a `domain` and an optional `include` list of enrichment modules:
+`business` and `funding`. Current open roles arrive as `open_positions` signals.
 `get_company_signals` takes a `domain` plus `days`, `categories`, `signal_keys` and `limit`,
 and returns the dated timeline — the raw material for a "why now" argument.
 
 ### refresh_company / get_refresh_status
 
-`refresh_company` takes a `domain` and optional `modules`, queues a scan and hands back a
+`refresh_company` takes a `domain` and optional `modules` (`signals`, `funding`, `hiring`,
+`business`), queues a scan and hands back a
 `batch_id`. `get_refresh_status` polls that id for free until the scan lands — the call blocks
 and waits for you, so a scan costs two or three patient calls rather than twenty impatient ones.
 
