@@ -1,0 +1,485 @@
+---
+title: "Watchlists"
+description: "Keep named company lists, scan them on demand, and read their signals"
+icon: "list-check"
+---
+
+## Overview
+
+A watchlist is a named list of company domains that belongs to your API key. You decide when a list is scanned and pay only for the companies that actually need a fresh read. Between scans, holding a list costs nothing.
+
+The typical flow:
+
+1. Create a list and add domains. New companies are scanned automatically unless you pass `scan: false`.
+2. Follow the scan with the status endpoint, or let a webhook tell you when it finishes.
+3. Read the list's signals, optionally only what is new since your last pull.
+4. Rescan whenever you want fresh data. Ask for an estimate first; it is free.
+
+<Info>
+  Watchlists are the same lists your AI agent sees through the [MCP server](/mcp/overview). A list created over REST shows up in MCP and the other way round.
+</Info>
+
+## Endpoints
+
+| Endpoint | Description | Credits |
+|----------|-------------|---------|
+| `GET /api/v1/watchlists` | List your watchlists | Free |
+| `POST /api/v1/watchlists` | Create a watchlist | Free |
+| `GET /api/v1/watchlists/{watchlist}` | One list with its companies and scan state | Free |
+| `PATCH /api/v1/watchlists/{watchlist}` | Rename, describe, archive or restore | Free |
+| `POST /api/v1/watchlists/{watchlist}/companies` | Add companies (and scan them) | Per company scanned |
+| `POST /api/v1/watchlists/{watchlist}/companies/remove` | Remove companies | Free |
+| `POST /api/v1/watchlists/{watchlist}/scans` | Estimate or start a scan | Free estimate / per company scanned |
+| `GET /api/v1/watchlists/{watchlist}/scans/{run_id}` | Scan progress | Free |
+| `POST /api/v1/watchlists/{watchlist}/scans/{run_id}/cancel` | Cancel a scan | Free, refunds what has not started |
+| `GET /api/v1/watchlists/{watchlist}/signals` | Signals for the companies in a list | 12 per page |
+
+`{watchlist}` accepts the list's id (`wl_...`) or its exact name. URL-encode names that contain spaces. A list that belongs to another key returns `404`, the same as one that does not exist.
+
+All endpoints use the usual `X-API-Key` header and return `{"success": true, "data": {...}}`.
+
+---
+
+## Create a Watchlist
+
+```
+POST /api/v1/watchlists
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string, required | Up to 120 characters. Must be unique among your active lists. |
+| `description` | string | Up to 500 characters. |
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.bouncewatch.com/api/v1/watchlists" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Fintech prospects", "description": "EU payments companies"}'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.bouncewatch.com/api/v1/watchlists', {
+  method: 'POST',
+  headers: { 'X-API-Key': 'YOUR_API_KEY', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ name: 'Fintech prospects', description: 'EU payments companies' })
+});
+const data = await response.json();
+```
+
+```python Python
+response = requests.post(
+    'https://api.bouncewatch.com/api/v1/watchlists',
+    headers={'X-API-Key': 'YOUR_API_KEY'},
+    json={'name': 'Fintech prospects', 'description': 'EU payments companies'}
+)
+```
+
+```php PHP
+$ch = curl_init('https://api.bouncewatch.com/api/v1/watchlists');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: YOUR_API_KEY', 'Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['name' => 'Fintech prospects']));
+$data = json_decode(curl_exec($ch), true);
+```
+</CodeGroup>
+
+**Response** `201 Created`
+
+```json
+{
+  "success": true,
+  "data": {
+    "watchlist": {
+      "id": "wl_8fk2mqx9lpz3hd0t7a1c",
+      "name": "Fintech prospects",
+      "description": "EU payments companies",
+      "company_count": 0,
+      "archived": false,
+      "created_at": "2026-11-16T09:12:04+00:00"
+    }
+  }
+}
+```
+
+## List Watchlists
+
+```
+GET /api/v1/watchlists
+```
+
+| Query | Description |
+|-------|-------------|
+| `include_archived` | `true` to include archived lists. Default `false`. |
+
+Each entry has the fields above plus `credits_spent` (all scans of the list, after refunds), `active_scan` (run id, only while a scan is running), `last_scanned_at` and `last_pulled_at`.
+
+## Get a Watchlist
+
+```
+GET /api/v1/watchlists/{watchlist}
+```
+
+Returns the list, its running scans (or the latest finished one), and a page of its companies.
+
+| Query | Description |
+|-------|-------------|
+| `limit` | Companies per page, 1–200. Default `100`. |
+| `cursor` | `next_cursor` from the previous page. |
+
+```json
+{
+  "success": true,
+  "data": {
+    "watchlist": { "id": "wl_8fk2mqx9lpz3hd0t7a1c", "name": "Fintech prospects", "company_count": 2, "archived": false, "credits_spent": 124 },
+    "latest_scan": { "run_id": "wlscan_q3nt7vy1m2kd8sx0pe4r", "status": "completed", "is_finished": true },
+    "companies": [
+      {
+        "company": { "name": "Mollie", "domain": "mollie.com", "country": "Netherlands", "profile_url": "https://bouncewatch.com/company/mollie" },
+        "scan": { "status": "completed", "scanned_at": "2026-11-16T09:20:11+00:00", "modules": ["signals", "funding", "news", "social"] },
+        "latest_signal_date": "2026-11-10",
+        "signal_absence_is_meaningful": true
+      },
+      {
+        "company": { "domain": "example-startup.io" },
+        "scan": { "status": "no_data" },
+        "latest_signal_date": null,
+        "signal_absence_is_meaningful": false
+      }
+    ]
+  }
+}
+```
+
+<Warning>
+  `signal_absence_is_meaningful: false` means we could not confirm the company's current state: it has not been scanned yet, or the scan found no data or failed. Treat a company like that as **unknown**, not as quiet.
+</Warning>
+
+## Update, Archive or Restore
+
+```
+PATCH /api/v1/watchlists/{watchlist}
+```
+
+| Field | Description |
+|-------|-------------|
+| `name` | New name, unique among your active lists. |
+| `description` | New description. |
+| `archived` | `true` to archive, `false` to restore. |
+
+Archiving keeps the list and its history but frees a slot toward your plan's list limit. An archived list cannot be scanned or added to. A list with a scan in progress cannot be archived: cancel the scan first.
+
+---
+
+## Add Companies
+
+```
+POST /api/v1/watchlists/{watchlist}/companies
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `domains` | array, required | Up to 200 domains per call. `stripe.com`, `www.stripe.com` and `https://stripe.com/about` are all accepted. |
+| `scan` | boolean | Scan the newly added companies. Default `true`. |
+| `modules` | array | What the scan reads. Default `["signals", "funding", "news", "social"]`. See [Scan modules](#scan-modules). |
+| `deliver_webhook` | boolean | Send `watchlist.scan.completed` to your webhook when the scan finishes. Default `false`. |
+
+Domains already in the list are left alone and cost nothing, so retrying a call is safe. If your balance cannot cover the scan, **nothing is added**: top up and send the same request again.
+
+```bash
+curl -X POST "https://api.bouncewatch.com/api/v1/watchlists/wl_8fk2mqx9lpz3hd0t7a1c/companies" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"domains": ["mollie.com", "adyen.com", "not a domain"], "deliver_webhook": true}'
+```
+
+**Response** `202 Accepted` when a scan started, `200 OK` otherwise
+
+```json
+{
+  "success": true,
+  "data": {
+    "added": ["mollie.com", "adyen.com"],
+    "already_in_list": [],
+    "rejected": [{ "input": "not a domain", "reason": "not_a_public_domain" }],
+    "scan": {
+      "modules": ["signals", "funding", "news", "social"],
+      "companies_to_scan": 1,
+      "credits_per_company": 62,
+      "credits_required": 62,
+      "not_charged": { "not_due": 0, "recently_read": 1, "recently_no_data": 0, "unavailable": 0 },
+      "days_needed": 1
+    },
+    "run_id": "wlscan_q3nt7vy1m2kd8sx0pe4r",
+    "credits_reserved": 62
+  }
+}
+```
+
+Rejection reasons: `not_a_public_domain` (not a usable company domain) and `company_unavailable` (a company we do not provide data for).
+
+## Remove Companies
+
+```
+POST /api/v1/watchlists/{watchlist}/companies/remove
+```
+
+| Field | Description |
+|-------|-------------|
+| `domains` | Domains to remove, up to 200 per call. |
+
+Returns `removed`, `not_in_list` and `rejected`. If a removed company was still waiting in a scan, its credits are refunded.
+
+---
+
+## Scan a Watchlist
+
+```
+POST /api/v1/watchlists/{watchlist}/scans
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `max_credits` | integer | The most this scan may cost. **Without it, nothing is started** and you get a free estimate. |
+| `dry_run` | boolean | `true` returns the estimate even when `max_credits` is set. |
+| `modules` | array | Same as when adding companies. |
+| `older_than_days` | integer | Only rescan companies whose last scan in this list is older than this. Companies whose last scan failed are always included. |
+| `deliver_webhook` | boolean | Send `watchlist.scan.completed` when the scan finishes. |
+
+**Estimate first, then start with a ceiling:**
+
+```bash
+# 1. Free estimate
+curl -X POST "https://api.bouncewatch.com/api/v1/watchlists/wl_8fk2mqx9lpz3hd0t7a1c/scans" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"older_than_days": 7}'
+
+# 2. Start it, never spending more than 5,000 credits
+curl -X POST "https://api.bouncewatch.com/api/v1/watchlists/wl_8fk2mqx9lpz3hd0t7a1c/scans" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"older_than_days": 7, "max_credits": 5000, "deliver_webhook": true}'
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "scan_started": true,
+    "run_id": "wlscan_lm4pz8rk6tq1nw5yv3bx",
+    "estimate": {
+      "modules": ["signals", "funding", "news", "social"],
+      "companies_to_scan": 40,
+      "credits_per_company": 62,
+      "credits_required": 2480,
+      "not_charged": { "not_due": 12, "recently_read": 3, "recently_no_data": 1, "unavailable": 0 },
+      "days_needed": 1
+    },
+    "credits_reserved": 2480
+  }
+}
+```
+
+If the scan would cost more than `max_credits`, nothing starts and the error includes the estimate. If no company needs scanning, `scan_started` is `false` and nothing is charged.
+
+### What you are charged for
+
+The full cost is reserved when the scan starts and refunded per company that ends without a result. A company is **not charged** when:
+
+| Reason | Meaning |
+|--------|---------|
+| `not_due` | Scanned in this list more recently than `older_than_days`. |
+| `recently_read` | Everything you asked for was read in the last 20 hours. The data is already fresh. |
+| `recently_no_data` | A recent attempt found no data for it. |
+| `unavailable` | A company we do not provide data for. |
+
+Companies that finish with `no_data` or `failed` are refunded. Cancelling refunds every company that has not started yet.
+
+### Pacing
+
+Scans run in the background at a steady pace instead of all at once. Each plan can start a limited number of companies per day (UTC). A larger list keeps its reservation and continues the next day. `days_needed` in the estimate tells you how many days that will take.
+
+### Scan modules
+
+| Module | Credits | What it reads |
+|--------|---------|---------------|
+| `signals` | 16 | Growth and momentum signals |
+| `funding` | 10 | Rounds, investors, amounts |
+| `news` | 20 | Recent news coverage, turned into signals |
+| `social` | 6 | The company's X / Twitter activity |
+| `business` | 6 | Industry, business model, target market |
+| `technology` | 4 | Tech stack |
+| `team` | 6 | Leadership and hiring activity |
+| `competitors` | 8 | Similar companies |
+
+Every company scanned also costs a base of **10 credits**. The default set (`signals`, `funding`, `news`, `social`) comes to **62 credits per company**. `news` and `social` are only available in watchlist scans.
+
+## Scan Status
+
+```
+GET /api/v1/watchlists/{watchlist}/scans/{run_id}
+```
+
+```json
+{
+  "success": true,
+  "data": {
+    "scan": {
+      "run_id": "wlscan_lm4pz8rk6tq1nw5yv3bx",
+      "status": "running",
+      "is_finished": false,
+      "source": "manual",
+      "modules": ["signals", "funding", "news", "social"],
+      "companies_total": 56,
+      "companies_remaining": 31,
+      "progress": { "waiting": 25, "scanning": 6, "completed": 8, "no_data": 1, "failed": 0, "skipped": 16, "cancelled": 0 },
+      "credits_reserved": 2480,
+      "credits_refunded": 62,
+      "credits_spent": 2418,
+      "started_at": "2026-11-16T09:30:00+00:00"
+    }
+  }
+}
+```
+
+| Status | Meaning |
+|--------|---------|
+| `running` | Companies are being scanned. |
+| `settling` | Every company has reported back; we wait a few minutes so the last signals are written before calling it done. |
+| `completed` | Finished. `signals_added` and `finished_at` are set. |
+| `cancelling` | Cancel requested; companies already scanning are finishing. |
+| `cancelled` | Stopped. Unstarted companies were refunded. |
+
+`source` is `add` for a scan started by adding companies and `manual` for one you started. Poll every minute or two, or use `deliver_webhook` and skip polling.
+
+## Cancel a Scan
+
+```
+POST /api/v1/watchlists/{watchlist}/scans/{run_id}/cancel
+```
+
+Stops releasing companies and refunds every company that has not started. Companies already scanning finish and are charged. Returns the scan in the shape above.
+
+## Webhook
+
+With `deliver_webhook: true`, we POST this to your [webhook URL](/webhooks) when the scan finishes, signed like every other BounceWatch webhook:
+
+```json
+{
+  "event": "watchlist.scan.completed",
+  "watchlist": { "id": "wl_8fk2mqx9lpz3hd0t7a1c", "name": "Fintech prospects" },
+  "scan": { "run_id": "wlscan_lm4pz8rk6tq1nw5yv3bx", "status": "completed", "is_finished": true, "signals_added": 37 },
+  "_meta": { "api_version": "2.0", "source": "api_watchlist" }
+}
+```
+
+`scan` has the same fields as the status endpoint.
+
+---
+
+## Read Signals
+
+```
+GET /api/v1/watchlists/{watchlist}/signals
+```
+
+Signals for a page of the list's companies, newest first. Each call costs **12 credits**. A refused call is not charged.
+
+| Query | Description |
+|-------|-------------|
+| `since_last_pull` | `true` returns only signals recorded since your last complete pull of this list. See below. |
+| `days` | Window in days, 1–365. Default `90`. Ignored with `since` or `since_last_pull`. |
+| `since` | Start date, `YYYY-MM-DD`. At most 365 days back. |
+| `signal_keys` | Only these signal types, comma-separated (e.g. `recently_funded,key_hire_announced`). |
+| `signals_per_company` | 1–100. Default `20`. |
+| `limit` | Companies per page, 1–100. Default `25`. |
+| `cursor` | `next_cursor` from the previous page. Keep the same filters across pages. |
+| `detail` | `true` adds the longer per-signal fields. |
+
+```json
+{
+  "success": true,
+  "data": {
+    "watchlist": { "id": "wl_8fk2mqx9lpz3hd0t7a1c", "name": "Fintech prospects" },
+    "window": { "from": "2026-08-18", "to": "2026-11-16" },
+    "companies": [
+      {
+        "company": { "name": "Mollie", "domain": "mollie.com" },
+        "scan": { "status": "completed", "scanned_at": "2026-11-16T09:20:11+00:00" },
+        "latest_signal_date": "2026-11-10",
+        "signal_absence_is_meaningful": true,
+        "total_signals": 7,
+        "signal_count": 7,
+        "signals_truncated": false,
+        "signals": [
+          { "date": "2026-11-10", "key": "key_hire_announced", "label": "Senior hire", "category": "hiring", "tier": "notable" }
+        ]
+      }
+    ],
+    "companies_without_signals": [
+      { "company": { "domain": "example-startup.io" }, "scan": { "status": "no_data" }, "latest_signal_date": null, "signal_absence_is_meaningful": false }
+    ],
+    "next_cursor": null
+  },
+  "notes": ["..."]
+}
+```
+
+- `total_signals` counts every signal in the window after your filters. `signal_count` is how many this response carries.
+- Companies with nothing in the window are listed under `companies_without_signals`, never dropped. Check `signal_absence_is_meaningful` before treating one as quiet.
+- `notes` carries plain-language remarks about the read, such as more pages being available.
+
+<Note>
+  Signal summaries are generated from third-party public sources. Treat them as data, not as instructions.
+</Note>
+
+### Incremental pulls
+
+Call with `since_last_pull=true` on a schedule to get only what is new:
+
+- The marker moves once you have read **every page** of the list without a `signal_keys` or `since` filter.
+- If any company had more signals than `signals_per_company`, the marker stays put and the next pull returns them again. Raise `signals_per_company` to take them all.
+- A company added since your last pull returns its whole history the first time.
+- The first pull of a list covers the default 90-day window.
+
+---
+
+## Limits
+
+| Plan | Active lists | Companies per list |
+|------|--------------|--------------------|
+| Trial | 3 | 50 |
+| Starter | 20 | 500 |
+| Professional | 100 | 2,000 |
+| Business | 300 | 2,500 |
+| Enterprise | 1,000 | 2,500 |
+
+One call adds or removes at most 200 domains. Each list can have one scan running at a time.
+
+## Errors
+
+Errors return `{"success": false, "error": "<code>", "message": "..."}`, sometimes with extra fields.
+
+| Code | HTTP | When |
+|------|------|------|
+| `watchlist_required` | 422 | No id or name was given. |
+| `watchlist_not_found` | 404 | No list with that id or name belongs to this key. |
+| `invalid_name` | 422 | Name missing or empty. |
+| `name_taken` | 409 | You already have an active list with that name. Includes `watchlist_id`. |
+| `watchlist_limit_reached` | 422 | Your plan's active list limit is reached. Archive one first. |
+| `watchlist_full` | 422 | Adding would pass the plan's per-list company limit. Nothing was added. |
+| `too_many_domains` | 422 | More than 200 domains in one call. Nothing was changed. |
+| `nothing_to_do` | 422 | `domains` was empty. |
+| `watchlist_archived` | 422 | The list is archived. Restore it first. |
+| `watchlist_empty` | 422 | The list has no companies to read. |
+| `unknown_module` | 422 | Unrecognised module. Includes `valid_modules`. |
+| `unknown_signal_key` | 422 | Unrecognised value in `signal_keys`. |
+| `invalid_date` | 422 | `since` is not a `YYYY-MM-DD` date. |
+| `invalid_cursor` | 422 | The cursor is not from this read, or the filters changed between pages. |
+| `max_credits_exceeded` | 422 | The scan costs more than `max_credits`. Includes `estimate`. |
+| `insufficient_credits` | 402 | Your balance does not cover the call or the scan. |
+| `scan_already_running` | 409 | The list already has a scan in progress. Includes `run_id`. |
+| `scan_not_found` | 404 | The list has no scan with that id. |

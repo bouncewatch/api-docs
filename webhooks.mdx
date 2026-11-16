@@ -211,11 +211,31 @@ Find it — and rotate it — in
       Credits are **automatically refunded** when no data is found for a domain.
     </Info>
   </Accordion>
-  
+
+  <Accordion title="watchlist.scan.completed" icon="list-check">
+    Sent when a [watchlist scan](/api-reference/watchlists#webhook) finishes, if it was started with `deliver_webhook: true`.
+
+    ```json
+    {
+      "event": "watchlist.scan.completed",
+      "watchlist": { "id": "wl_8fk2mqx9lpz3hd0t7a1c", "name": "Fintech prospects" },
+      "scan": {
+        "run_id": "wlscan_lm4pz8rk6tq1nw5yv3bx",
+        "status": "completed",
+        "is_finished": true,
+        "companies_total": 56,
+        "credits_spent": 2418,
+        "signals_added": 37
+      },
+      "_meta": { "api_version": "2.0", "source": "api_watchlist" }
+    }
+    ```
+  </Accordion>
+
 </AccordionGroup>
 
 <Note>
-  Those three are the complete list. There are no credit-balance webhooks — poll
+  Those four are the complete list. There are no credit-balance webhooks — poll
   [`GET /account/credits`](/api-reference/account#get-credit-balance) if you want to alert
   on a low balance, or watch the `credits_remaining` field returned with cached responses.
 </Note>

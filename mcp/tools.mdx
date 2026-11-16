@@ -1,6 +1,6 @@
 ---
 title: "Tools and prompts"
-description: "The ten MCP tools, what they cost, and the ready-made workflows"
+description: "The fifteen MCP tools, what they cost, and the ready-made workflows"
 icon: "wrench"
 ---
 
@@ -20,6 +20,11 @@ the meter running and pace itself instead of looping blind.
 | `get_refresh_status` | **free** | Polls a running scan, and waits for its writes to settle. Free by design — the async model only works if waiting is free. |
 | `watch_company` | 5 | Registers a standing interest. The only tool that outlives the session it was called in. |
 | `check_watches` | **free** | Collects what has fired since you last asked. |
+| `list_watchlists` | **free** | The named company lists on this key, with size and spend. |
+| `manage_watchlist` | **free** | Creates, renames, archives or restores a list. |
+| `update_watchlist_companies` | per company scanned | Adds or removes domains. New companies are scanned unless `scan: false`. |
+| `scan_watchlist` | free estimate / per company scanned | Estimates, starts or cancels a scan of a whole list. |
+| `get_watchlist` | **free** | A list as a map: each company's signal count and strongest signal, plus scan progress. |
 | `get_signal_taxonomy` | **free** | The signal vocabulary, plus which categories are dense and which are rare. Call it once per session. |
 
 <Info>
@@ -143,6 +148,39 @@ The webhook never replaces the inbox row, so a failed delivery is not a lost eve
 Guardrails, because an agent loop can dispatch scans far faster than a person would: a daily
 cap per key, per-plan concurrency, a 24-hour cooldown on the same domain, and a global
 in-flight lock so two keys cannot scan the same domain at once.
+
+### Watchlists
+
+A watchlist is a named set of companies, usually one per client or project. It is **not** a
+watch: nothing in it is scanned until you add companies or ask for a scan, and holding one costs
+nothing. Use `watch_company` for a company you want followed continuously; use a watchlist when
+you want to refresh and read a whole account list on your own schedule.
+
+The same lists are available over REST — see [Watchlists](/api-reference/watchlists) for the
+full rules on pricing, limits and pacing.
+
+- **`manage_watchlist`** — `action` is `create`, `update`, `archive` or `restore`, with `name`
+  and `description`. A list can be addressed by its id or its exact name everywhere.
+- **`update_watchlist_companies`** — `add` and/or `remove` domains (up to 200 per call). Added
+  companies are scanned with the default modules (`signals`, `funding`, `news`, `social`, 62
+  credits per company) unless you pass `modules` or `scan: false`. If the scan cannot be paid
+  for, nothing is added. Repeating a call is safe: domains already in the list cost nothing.
+- **`scan_watchlist`** — called without `max_credits` it only returns what a scan would cover
+  and cost. Show that to the user, then call again with `max_credits` to start. Companies read
+  in the last 20 hours are skipped without charge; `older_than_days` also skips ones this list
+  scanned recently. `cancel: true` with `run_id` stops a scan and refunds what has not started.
+- **`get_watchlist`** — no signal bodies, by design: each company with how many signals it has
+  in the window (`days`, default 30) and the strongest one, so the agent can pick the companies
+  that moved and read those with `get_company_signals`. `since_last_pull` returns only what was
+  recorded since the last complete read; `with_signals_only` drops quiet companies. Follow
+  `next_cursor` for long lists.
+
+<Warning>
+  Scans run in the background and a long list can take hours. As with `get_refresh_status`,
+  a scan moves through `running` and `settling` to `completed` — read results once it says
+  `completed`. Pass `deliver_webhook: true` to get `watchlist.scan.completed` on your
+  [webhook](/webhooks) instead of polling.
+</Warning>
 
 ## Prompts
 

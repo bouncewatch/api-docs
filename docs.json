@@ -52,6 +52,7 @@
           "api-reference/response-schema",
           "api-reference/company-api",
           "api-reference/enrichment-tracking",
+          "api-reference/watchlists",
           "api-reference/account"
         ]
       },
